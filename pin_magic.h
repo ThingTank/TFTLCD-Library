@@ -38,6 +38,7 @@
 // Mega port/pin:  PH4  PH3  PB7  PG5  PB5  PB4  PH6  PH5
 // Leo port/pin :  PE6  PD7  PC7  PD4  PB7  PB6  PB5  PB4
 // Due port/pin : PC23 PC24 PB27 PC26  PD7 PC29 PC21 PC22
+
 // Breakout pin usage:
 // LCD Data Bit :   7   6   5   4   3   2   1   0
 // Uno dig. pin :   7   6   5   4   3   2   9   8
@@ -129,7 +130,7 @@
   // why only certain cases are inlined for each board.
   #define write8 write8inline
 
-#elif defined(__AVR_ATmega1281__) || defined(__AVR_ATmega2561__) || defined(__AVR_ATmega2560__) || defined(__AVR_ATmega1280__) 
+#elif defined(__AVR_ATmega1281__) || defined(__AVR_ATmega2561__) || defined(__AVR_ATmega2560__) || defined(__AVR_ATmega1280__)
 
  // Arduino Mega, ADK, etc.
 
@@ -261,7 +262,7 @@
 
  #ifdef USE_ADAFRUIT_SHIELD_PINOUT
 
-  #define RD_PORT PIOA				/*pin A0 */	
+  #define RD_PORT PIOA				/*pin A0 */
   #define WR_PORT PIOA				/*pin A1 */
   #define CD_PORT PIOA				/*pin A2 */
   #define CS_PORT PIOA				/*pin A3 */
@@ -279,7 +280,7 @@
    PIO_Clear(PIOB, (((~d) & 0x20)<<(27-5))); \
    WR_STROBE; }
 
-  #define read8inline(result) { \    
+  #define read8inline(result) { \
    RD_ACTIVE;   \
    delayMicroseconds(1);      \
    result = (((PIOC->PIO_PDSR & (1<<23)) >> (23-7)) | ((PIOC->PIO_PDSR & (1<<24)) >> (24-6)) | \
@@ -334,7 +335,7 @@
 
     // When using the TFT breakout board, control pins are configurable.
     #define RD_ACTIVE	rdPort->PIO_CODR |= rdPinSet		//PIO_Clear(rdPort, rdPinSet)
-    #define RD_IDLE		rdPort->PIO_SODR |= rdPinSet		//PIO_Set(rdPort, rdPinSet)	
+    #define RD_IDLE		rdPort->PIO_SODR |= rdPinSet		//PIO_Set(rdPort, rdPinSet)
     #define WR_ACTIVE	wrPort->PIO_CODR |= wrPinSet		//PIO_Clear(wrPort, wrPinSet)
     #define WR_IDLE		wrPort->PIO_SODR |= wrPinSet		//PIO_Set(wrPort, wrPinSet)
     #define CD_COMMAND	cdPort->PIO_CODR |= cdPinSet		//PIO_Clear(cdPort, cdPinSet)
@@ -344,6 +345,287 @@
 
  #endif
 
+#elif defined(__SAMD21G18A__)
+
+// ThingTank TIJA: Fix for using the Shield with SAMD21 based boards like:
+// Arduino MKR1000, Adafruit Feather M0, ...
+//
+// Some explanations are in order...
+// * You can always communicate to specific digital/analog pins using standard
+//   Arduino functions like digitalWrite(), analogRead(), ... These functions
+//   include some overhead which makes them """"slow"""".
+// * Another way to set pins is to use the memory addresses of the GPIO pins
+//   directly. This is much faster, but obviously much more complicated.
+//
+// The Adafruit code, specifically for 8-bit LCD displays like this one, where
+// you want speed... writes directly to the Atmel registers to control pins
+// and setting them high/low.
+//
+// So to go for speed, we need to do some mapping of the pins where we
+// connected the TFT display to memory addresses. This is done in the following
+// lines which define the PORT and BITMASK to address a specific register.
+//
+// The first part are the LCD control lines that need to be assigned:
+// - RD = Read -> to be wired to pin A0
+// - WR = Write -> to be wired to pin A1
+// - CD = Command/Data -> to be wired to pin A2
+// - CS = Chip Select -> to be wired to pin A3
+//
+// The following code was updated, very heavily inspired by:
+// http://forum.arduino.cc/index.php?topic=334073.msg2308565#msg2308565
+//
+// The analogPinToBitMask and other macros are defined in:
+// packages\arduino\hardware\samd\<version>\variants\mkr1000\variants.h
+// packages\adafruit\hardware\samd\1.0.13\variants\zero_radio\variants.h
+// etc...
+//
+// This code should hence work for all SAMD21 boards that exist in the
+// Arduino framework. Otherwise, you'll need to do more advanced port
+// remapping using:
+//  packages\arduino\tools\CMSIS\4.0.0-atmel\Device\ATMEL\samd21\include\<yourcpu>.h
+//  packages\arduino\tools\CMSIS\4.0.0-atmel\Device\ATMEL\samd21\include\pio\<yourcpu>.h
+//
+
+  #ifdef USE_ADAFRUIT_SHIELD_PINOUT
+
+    #define RD_PORT digitalPinToPort(PIN_A0)    /*pin A0 */
+    #define WR_PORT digitalPinToPort(PIN_A1)    /*pin A1 */
+    #define CD_PORT digitalPinToPort(PIN_A2)    /*pin A2 */
+    #define CS_PORT digitalPinToPort(PIN_A3)    /*pin A3 */
+    #define RD_MASK digitalPinToBitMask(PIN_A0)
+    #define WR_MASK digitalPinToBitMask(PIN_A1)
+    #define CD_MASK digitalPinToBitMask(PIN_A2)
+    #define CS_MASK digitalPinToBitMask(PIN_A3)
+
+    // ThingTank TIJA: We define a helper MACRO to set or clear a bit in the
+    // PORT OUTPUT register
+    // See: https://forum.arduino.cc/index.php?topic=334073.msg2328725#msg2328725
+    #ifndef portOutputClearRegister
+      #define portOutputClearRegister(port) (&(port->OUTCLR.reg))
+    #endif
+    #ifndef portOutputSetRegister
+      #define portOutputSetRegister(port) (&(port->OUTSET.reg))
+    #endif
+
+    // Control signals are ACTIVE LOW (idle is HIGH)
+    // Command/Data: LOW = command, HIGH = data
+    // These are single-instruction operations and always inline
+    #define RD_ACTIVE  *portOutputClearRegister(RD_PORT) = RD_MASK
+    #define RD_IDLE    *portOutputSetRegister(RD_PORT) = RD_MASK
+    #define WR_ACTIVE  *portOutputClearRegister(WR_PORT) = WR_MASK
+    #define WR_IDLE    *portOutputSetRegister(WR_PORT) = WR_MASK
+    #define CD_COMMAND *portOutputClearRegister(CD_PORT) = CD_MASK
+    #define CD_DATA    *portOutputSetRegister(CD_PORT) = CD_MASK
+    #define CS_ACTIVE  *portOutputClearRegister(CS_PORT) = CS_MASK
+    #define CS_IDLE    *portOutputSetRegister(CS_PORT) = CS_MASK
+
+
+    // ThingTank TIJA: The PIN definitions for the 8 digital pins...
+    // You must enter ARDUINO Digital Pin numbers here!!!
+    // (lateron, they are mapped to the SAMD port numbers)
+
+    #define SAMD21_LCDDATA1 8
+    #define SAMD21_LCDDATA2 9
+    #define SAMD21_LCDDATA3 10
+    #define SAMD21_LCDDATA4 11
+    #define SAMD21_LCDDATA5 4
+    #define SAMD21_LCDDATA6 13
+    #define SAMD21_LCDDATA7 6
+    #define SAMD21_LCDDATA8 analogInputToDigitalPin(PIN_A0)
+
+    // ThingTank TIJA: The following are macro's which we define for reading and
+    // writing data...
+
+    #define SAMD21_LCD1PORT digitalPinToPort(SAMD21_LCDDATA1)
+    #define SAMD21_LCD2PORT digitalPinToPort(SAMD21_LCDDATA2)
+    #define SAMD21_LCD3PORT digitalPinToPort(SAMD21_LCDDATA3)
+    #define SAMD21_LCD4PORT digitalPinToPort(SAMD21_LCDDATA4)
+    #define SAMD21_LCD5PORT digitalPinToPort(SAMD21_LCDDATA5)
+    #define SAMD21_LCD6PORT digitalPinToPort(SAMD21_LCDDATA6)
+    #define SAMD21_LCD7PORT digitalPinToPort(SAMD21_LCDDATA7)
+    #define SAMD21_LCD8PORT digitalPinToPort(SAMD21_LCDDATA8)
+
+    #define digitalPinToPortPin(P) g_APinDescription[P].ulPin
+
+     // How to read?
+     // - First, set READ control pin active
+     // - Read the 8 digital pins and form the result
+     // - Set the READ control pin idle again
+
+     // LCD Data Bit :    7    6    5    4    3    2    1    0
+     // Digital pin #:    7    6   13    4   11   10    9    8
+     // Uno port/pin :  PD7  PD6  PB5  PD4  PB3  PB2  PB1  PB0
+     // Due port/pin : PC23 PC24 PB27 PC26  PD7 PC29 PC21 PC22
+
+     // How to read a bit?
+     // -> First, we map the "Arduino" PIN definition to a port on the SAMD21,
+     //    this is done using: digitalPinToPort(SAMD21_LCDDATA7)
+     // -> Next, we get the INPUT register associated to a specific port:
+     //      portInputRegister(digitalPinToPort(SAMD21_LCDDATA7))
+     //    This input register has 1 or 0 on specific locations, defined by
+     //    the bitmask of that port.
+     // -> So we do an AND with the port's bitmask to do a digital read:
+     //    portInputRegister(digitalPinToPort(SAMD21_LCDDATA7)) & digitalPinToBitMask(SAMD21_LCDDATA7)
+     // -> This has a 1 or 0 on the location of the SAMD21 port corresponding to that PIN,
+     //    so we do some bit shifting to make sure this is at the proper location...
+
+    #define read8inline(result) { \
+     RD_ACTIVE;   \
+     delayMicroseconds(1);      \
+     result = ( \
+       ((*portInputRegister(SAMD21_LCD8PORT) & digitalPinToBitMask(SAMD21_LCDDATA8)) >> (digitalPinToPortPin(SAMD21_LCDDATA8)-7)) | \
+       ((*portInputRegister(SAMD21_LCD7PORT) & digitalPinToBitMask(SAMD21_LCDDATA7)) >> (digitalPinToPortPin(SAMD21_LCDDATA7)-6)) | \
+       ((*portInputRegister(SAMD21_LCD6PORT) & digitalPinToBitMask(SAMD21_LCDDATA6)) >> (digitalPinToPortPin(SAMD21_LCDDATA6)-5)) | \
+       ((*portInputRegister(SAMD21_LCD5PORT) & digitalPinToBitMask(SAMD21_LCDDATA5)) >> (digitalPinToPortPin(SAMD21_LCDDATA5)-4)) | \
+       ((*portInputRegister(SAMD21_LCD4PORT) & digitalPinToBitMask(SAMD21_LCDDATA4)) >> (digitalPinToPortPin(SAMD21_LCDDATA4)-3)) | \
+       ((*portInputRegister(SAMD21_LCD3PORT) & digitalPinToBitMask(SAMD21_LCDDATA3)) >> (digitalPinToPortPin(SAMD21_LCDDATA3)-2)) | \
+       ((*portInputRegister(SAMD21_LCD2PORT) & digitalPinToBitMask(SAMD21_LCDDATA2)) >> (digitalPinToPortPin(SAMD21_LCDDATA2)-1)) | \
+       ((*portInputRegister(SAMD21_LCD1PORT) & digitalPinToBitMask(SAMD21_LCDDATA1)) >> (digitalPinToPortPin(SAMD21_LCDDATA1)-0)) \
+     ); \
+     RD_IDLE; }
+
+     // The following macro returns the OUTCLR register if we need to write a 0 to the pin, or the OUTSET register otherwise
+     #define portFlexOutputRegister(port,val) ((val>0) ? portOutputSetRegister(port) : portOutputClearRegister(port))
+
+     // How to write 8 bits?
+     // - Set all the bits that need to be set to HIGH
+     // - Clear all other bits to LOW
+     // - Then signal LCD that data is to be read, that is the WR_STROBE macro
+
+     #define write8inline(d) { \
+       *portFlexOutputRegister(SAMD21_LCD1PORT,((d) & 0x01)) = digitalPinToBitMask(SAMD21_LCDDATA1); \
+       *portFlexOutputRegister(SAMD21_LCD2PORT,((d) & 0x02)) = digitalPinToBitMask(SAMD21_LCDDATA2); \
+       *portFlexOutputRegister(SAMD21_LCD3PORT,((d) & 0x04)) = digitalPinToBitMask(SAMD21_LCDDATA3); \
+       *portFlexOutputRegister(SAMD21_LCD4PORT,((d) & 0x08)) = digitalPinToBitMask(SAMD21_LCDDATA4); \
+       *portFlexOutputRegister(SAMD21_LCD5PORT,((d) & 0x10)) = digitalPinToBitMask(SAMD21_LCDDATA5); \
+       *portFlexOutputRegister(SAMD21_LCD6PORT,((d) & 0x20)) = digitalPinToBitMask(SAMD21_LCDDATA6); \
+       *portFlexOutputRegister(SAMD21_LCD7PORT,((d) & 0x40)) = digitalPinToBitMask(SAMD21_LCDDATA7); \
+       *portFlexOutputRegister(SAMD21_LCD8PORT,((d) & 0x80)) = digitalPinToBitMask(SAMD21_LCDDATA8); \
+       WR_STROBE; }
+
+       // Implementation note: I realize this can be done more efficient than 8 separate commands, by directly using
+       // the OUT register instead of OUTCLR/OUTSET. That involves a dedicated choice of the PIN assignment since
+       // then we need to distinguish between PORTA and PORTB for proper bitmasking. The current implementation is
+       // (slightly) slower but more portable to other SAMD21 based devices.
+
+
+     // These set the PORT directions as required before the write and read
+     // operations.  Because write operations are much more common than reads,
+     // the data-reading functions in the library code set the PORT(s) to
+     // input before a read, and restore them back to the write state before
+     // returning.  This avoids having to set it for output inside every
+     // drawing method.  The default state has them initialized for writes.
+
+
+    #define setWriteDirInline() { \
+      SAMD21_LCD1PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA1)].bit.INEN = 1; \
+      SAMD21_LCD1PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA1)].bit.PULLEN = 0; \
+      SAMD21_LCD1PORT->DIRSET.reg = digitalPinToBitMask(SAMD21_LCDDATA1); \
+      SAMD21_LCD2PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA2)].bit.INEN = 1; \
+      SAMD21_LCD2PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA2)].bit.PULLEN = 0; \
+      SAMD21_LCD2PORT->DIRSET.reg = digitalPinToBitMask(SAMD21_LCDDATA2); \
+      SAMD21_LCD3PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA3)].bit.INEN = 1; \
+      SAMD21_LCD3PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA3)].bit.PULLEN = 0; \
+      SAMD21_LCD3PORT->DIRSET.reg = digitalPinToBitMask(SAMD21_LCDDATA3); \
+      SAMD21_LCD4PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA4)].bit.INEN = 1; \
+      SAMD21_LCD4PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA4)].bit.PULLEN = 0; \
+      SAMD21_LCD4PORT->DIRSET.reg = digitalPinToBitMask(SAMD21_LCDDATA4); \
+      SAMD21_LCD5PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA5)].bit.INEN = 1; \
+      SAMD21_LCD5PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA5)].bit.PULLEN = 0; \
+      SAMD21_LCD5PORT->DIRSET.reg = digitalPinToBitMask(SAMD21_LCDDATA5); \
+      SAMD21_LCD6PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA6)].bit.INEN = 1; \
+      SAMD21_LCD6PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA6)].bit.PULLEN = 0; \
+      SAMD21_LCD6PORT->DIRSET.reg = digitalPinToBitMask(SAMD21_LCDDATA6); \
+      SAMD21_LCD7PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA7)].bit.INEN = 1; \
+      SAMD21_LCD7PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA7)].bit.PULLEN = 0; \
+      SAMD21_LCD7PORT->DIRSET.reg = digitalPinToBitMask(SAMD21_LCDDATA7); \
+      SAMD21_LCD8PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA8)].bit.INEN = 1; \
+      SAMD21_LCD8PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA8)].bit.PULLEN = 0; \
+      SAMD21_LCD8PORT->DIRSET.reg = digitalPinToBitMask(SAMD21_LCDDATA8); }
+
+    #define setReadDirInline() { \
+      SAMD21_LCD1PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA1)].reg=(uint8_t)(PORT_PINCFG_INEN|PORT_PINCFG_PULLEN); \
+      SAMD21_LCD1PORT->DIRCLR.reg = digitalPinToBitMask(SAMD21_LCDDATA1);  \
+      SAMD21_LCD1PORT->OUTCLR.reg = digitalPinToBitMask(SAMD21_LCDDATA1);  \
+      SAMD21_LCD2PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA2)].reg=(uint8_t)(PORT_PINCFG_INEN|PORT_PINCFG_PULLEN); \
+      SAMD21_LCD2PORT->DIRCLR.reg = digitalPinToBitMask(SAMD21_LCDDATA2);  \
+      SAMD21_LCD2PORT->OUTCLR.reg = digitalPinToBitMask(SAMD21_LCDDATA2);  \
+      SAMD21_LCD3PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA3)].reg=(uint8_t)(PORT_PINCFG_INEN|PORT_PINCFG_PULLEN); \
+      SAMD21_LCD3PORT->DIRCLR.reg = digitalPinToBitMask(SAMD21_LCDDATA3);  \
+      SAMD21_LCD3PORT->OUTCLR.reg = digitalPinToBitMask(SAMD21_LCDDATA3);  \
+      SAMD21_LCD4PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA4)].reg=(uint8_t)(PORT_PINCFG_INEN|PORT_PINCFG_PULLEN); \
+      SAMD21_LCD4PORT->DIRCLR.reg = digitalPinToBitMask(SAMD21_LCDDATA4);  \
+      SAMD21_LCD4PORT->OUTCLR.reg = digitalPinToBitMask(SAMD21_LCDDATA4);  \
+      SAMD21_LCD5PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA5)].reg=(uint8_t)(PORT_PINCFG_INEN|PORT_PINCFG_PULLEN); \
+      SAMD21_LCD5PORT->DIRCLR.reg = digitalPinToBitMask(SAMD21_LCDDATA5);  \
+      SAMD21_LCD5PORT->OUTCLR.reg = digitalPinToBitMask(SAMD21_LCDDATA5);  \
+      SAMD21_LCD6PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA6)].reg=(uint8_t)(PORT_PINCFG_INEN|PORT_PINCFG_PULLEN); \
+      SAMD21_LCD6PORT->DIRCLR.reg = digitalPinToBitMask(SAMD21_LCDDATA6);  \
+      SAMD21_LCD6PORT->OUTCLR.reg = digitalPinToBitMask(SAMD21_LCDDATA6);  \
+      SAMD21_LCD7PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA7)].reg=(uint8_t)(PORT_PINCFG_INEN|PORT_PINCFG_PULLEN); \
+      SAMD21_LCD7PORT->DIRCLR.reg = digitalPinToBitMask(SAMD21_LCDDATA7);  \
+      SAMD21_LCD7PORT->OUTCLR.reg = digitalPinToBitMask(SAMD21_LCDDATA7);  \
+      SAMD21_LCD8PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA8)].reg=(uint8_t)(PORT_PINCFG_INEN|PORT_PINCFG_PULLEN); \
+      SAMD21_LCD8PORT->DIRCLR.reg = digitalPinToBitMask(SAMD21_LCDDATA8);  \
+      SAMD21_LCD8PORT->OUTCLR.reg = digitalPinToBitMask(SAMD21_LCDDATA8); }
+
+     // ThingTank TIJA: Here, you can define which commands will be used "inline"
+     // (which means: this macro is expanded at the location where the command is
+     // used) and which commands will be defined as a function by Adafruit_TFTLCD.cpp
+     // (see code almost at the end of the CPP file).
+     //
+     // Using it "inline" has the advantage that it is a bit faster (no function call)
+     // but takes up more program space as the code is duplicated a dozen times.
+     // Using them as functions however is only slight slower (it's just a function
+     // call for crying out loud).
+     //
+     // For "fast" ARM processors such as the SAMD21, you would need to be crazy
+     // to want to use them as inline functions (waste of space) so we're going
+     // to comment all the following lines, and make sure Adafruit_TFTLCD.cpp
+     // defines them as functions...
+
+     //#define write8            write8inline
+     //#define read8             read8inline
+     //#define setWriteDir       setWriteDirInline
+     //#define setReadDir        setReadDirInline
+     //#define writeRegister8    writeRegister8inline
+     //#define writeRegister16   writeRegister16inline
+     //#define writeRegisterPair writeRegisterPairInline
+
+
+   #else  // USE_ADAFRUIT_SHIELD_PINOUT
+
+      // ThingTank TIJA: This was not touched and just copied from Due section.
+      // Guaranteed to fail...
+
+       #define write8inline(d) { \
+   	  	PIO_Set(PIOC, (((d) & 0xFF)<<1)); \
+   	  	PIO_Clear(PIOC, (((~d) & 0xFF)<<1)); \
+   	  	WR_STROBE; }
+
+       #define read8inline(result) { \
+   	  	RD_ACTIVE;   \
+   	  	delayMicroseconds(1);      \
+   	  	result = ((PIOC->PIO_PDSR & 0x1FE) >> 1); \
+   	  	RD_IDLE;}
+
+       #define setWriteDirInline() { \
+   	     PIOC->PIO_MDDR |=  0x000001FE; /*PIOC->PIO_SODR |=  0x000001FE;*/ PIOC->PIO_OER |=  0x000001FE; PIOC->PIO_PER |=  0x000001FE; }
+
+       #define setReadDirInline() { \
+   	  	pmc_enable_periph_clk( ID_PIOC ) ; \
+   	  	PIOC->PIO_PUDR |=  0x000001FE; PIOC->PIO_IFDR |=  0x000001FE; PIOC->PIO_ODR |=  0x000001FE; PIOC->PIO_PER |=  0x000001FE; }
+
+       // When using the TFT breakout board, control pins are configurable.
+       #define RD_ACTIVE	rdPort->PIO_CODR |= rdPinSet		//PIO_Clear(rdPort, rdPinSet)
+       #define RD_IDLE		rdPort->PIO_SODR |= rdPinSet		//PIO_Set(rdPort, rdPinSet)
+       #define WR_ACTIVE	wrPort->PIO_CODR |= wrPinSet		//PIO_Clear(wrPort, wrPinSet)
+       #define WR_IDLE		wrPort->PIO_SODR |= wrPinSet		//PIO_Set(wrPort, wrPinSet)
+       #define CD_COMMAND	cdPort->PIO_CODR |= cdPinSet		//PIO_Clear(cdPort, cdPinSet)
+       #define CD_DATA		cdPort->PIO_SODR |= cdPinSet		//PIO_Set(cdPort, cdPinSet)
+       #define CS_ACTIVE	csPort->PIO_CODR |= csPinSet		//PIO_Clear(csPort, csPinSet)
+       #define CS_IDLE		csPort->PIO_SODR |= csPinSet		//PIO_Set(csPort, csPinSet)
+  #endif // USE_ADAFRUIT_SHIELD_PINOUT
 
 #else
 
@@ -351,7 +633,7 @@
 
 #endif
 
-#if !defined(__SAM3X8E__)
+#if !(defined(__SAM3X8E__)||defined(__SAMD21G18A__))
 // Stuff common to all Arduino AVR board types:
 
 #ifdef USE_ADAFRUIT_SHIELD_PINOUT

@@ -17,7 +17,10 @@
 // **** IF USING THE LCD BREAKOUT BOARD, COMMENT OUT THIS NEXT LINE. ****
 // **** IF USING THE LCD SHIELD, LEAVE THE LINE ENABLED:             ****
 
-//#define USE_ADAFRUIT_SHIELD_PINOUT 1
+// THINGTANK TIJA: Following the procedure on the following page:
+// https://learn.adafruit.com/adafruit-2-dot-8-color-tft-touchscreen-breakout-v2/8-bit-wiring
+// the following line needs to be UNcommented:
+#define USE_ADAFRUIT_SHIELD_PINOUT 1
 
 class Adafruit_TFTLCD : public Adafruit_GFX {
 
@@ -87,13 +90,13 @@ class Adafruit_TFTLCD : public Adafruit_GFX {
 					  csPinUnset,  cdPinUnset,  wrPinUnset,  rdPinUnset,
 					  _reset;
   #endif
-  #if defined(__SAM3X8E__)
+  #if defined(__SAM3X8E__)||defined(__SAMD21G18A__)
     Pio *csPort    , *cdPort    , *wrPort    , *rdPort;
 	uint32_t          csPinSet  ,  cdPinSet  ,  wrPinSet  ,  rdPinSet  ,
 					  csPinUnset,  cdPinUnset,  wrPinUnset,  rdPinUnset,
 					  _reset;
   #endif
-  
+
 #endif
 };
 
