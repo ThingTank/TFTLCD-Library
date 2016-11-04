@@ -106,6 +106,19 @@
   #define setWriteDirInline() { DDRD |=  B11010000; DDRB |=  B00101111; }
   #define setReadDirInline()  { DDRD &= ~B11010000; DDRB &= ~B00101111; }
 
+  // Control signals are ACTIVE LOW (idle is HIGH)
+  // Command/Data: LOW = command, HIGH = data
+  // These are single-instruction operations and always inline
+  #define RD_ACTIVE  RD_PORT &= ~RD_MASK
+  #define RD_IDLE    RD_PORT |=  RD_MASK
+  #define WR_ACTIVE  WR_PORT &= ~WR_MASK
+  #define WR_IDLE    WR_PORT |=  WR_MASK
+  #define CD_COMMAND CD_PORT &= ~CD_MASK
+  #define CD_DATA    CD_PORT |=  CD_MASK
+  #define CS_ACTIVE  CS_PORT &= ~CS_MASK
+  #define CS_IDLE    CS_PORT |=  CS_MASK
+
+
  #else // Uno w/Breakout board
 
   #define write8inline(d) {                          \
@@ -120,6 +133,17 @@
   #define setWriteDirInline() { DDRD |=  B11111100; DDRB |=  B00000011; }
   #define setReadDirInline()  { DDRD &= ~B11111100; DDRB &= ~B00000011; }
 
+  // When using the TFT breakout board, control pins are configurable.
+  #define RD_ACTIVE  *rdPort &=  rdPinUnset
+  #define RD_IDLE    *rdPort |=  rdPinSet
+  #define WR_ACTIVE  *wrPort &=  wrPinUnset
+  #define WR_IDLE    *wrPort |=  wrPinSet
+  #define CD_COMMAND *cdPort &=  cdPinUnset
+  #define CD_DATA    *cdPort |=  cdPinSet
+  #define CS_ACTIVE  *csPort &=  csPinUnset
+  #define CS_IDLE    *csPort |=  csPinSet
+
+
  #endif
 
   // As part of the inline control, macros reference other macros...if any
@@ -129,6 +153,7 @@
   // benefit, but unfortunately also generates the most bloat.  This is
   // why only certain cases are inlined for each board.
   #define write8 write8inline
+
 
 #elif defined(__AVR_ATmega1281__) || defined(__AVR_ATmega2561__) || defined(__AVR_ATmega2560__) || defined(__AVR_ATmega1280__)
 
@@ -161,6 +186,18 @@
   #define setReadDirInline()  {                                   \
     DDRH &= ~B01111000; DDRB &= ~B10110000; DDRG &= ~B00100000; }
 
+    // Control signals are ACTIVE LOW (idle is HIGH)
+    // Command/Data: LOW = command, HIGH = data
+    // These are single-instruction operations and always inline
+    #define RD_ACTIVE  RD_PORT &= ~RD_MASK
+    #define RD_IDLE    RD_PORT |=  RD_MASK
+    #define WR_ACTIVE  WR_PORT &= ~WR_MASK
+    #define WR_IDLE    WR_PORT |=  WR_MASK
+    #define CD_COMMAND CD_PORT &= ~CD_MASK
+    #define CD_DATA    CD_PORT |=  CD_MASK
+    #define CS_ACTIVE  CS_PORT &= ~CS_MASK
+    #define CS_IDLE    CS_PORT |=  CS_MASK
+
  #else // Mega w/Breakout board
 
   #define write8inline(d)   { PORTA = (d); WR_STROBE; }
@@ -171,6 +208,16 @@
     RD_IDLE; }
   #define setWriteDirInline() DDRA  = 0xff
   #define setReadDirInline()  DDRA  = 0
+
+  // When using the TFT breakout board, control pins are configurable.
+  #define RD_ACTIVE  *rdPort &=  rdPinUnset
+  #define RD_IDLE    *rdPort |=  rdPinSet
+  #define WR_ACTIVE  *wrPort &=  wrPinUnset
+  #define WR_IDLE    *wrPort |=  wrPinSet
+  #define CD_COMMAND *cdPort &=  cdPinUnset
+  #define CD_DATA    *cdPort |=  cdPinSet
+  #define CS_ACTIVE  *csPort &=  csPinUnset
+  #define CS_IDLE    *csPort |=  csPinSet
 
  #endif
 
@@ -187,6 +234,7 @@
   #define writeRegister8    writeRegister8inline
   #define writeRegister16   writeRegister16inline
   #define writeRegisterPair writeRegisterPairInline
+
 
 #elif defined(__AVR_ATmega32U4__)
 
@@ -223,6 +271,18 @@
     DDRE &= ~B01000000; DDRD &= ~B10010000;   \
     DDRC &= ~B10000000; DDRB &= ~B11110000; }
 
+    // Control signals are ACTIVE LOW (idle is HIGH)
+    // Command/Data: LOW = command, HIGH = data
+    // These are single-instruction operations and always inline
+    #define RD_ACTIVE  RD_PORT &= ~RD_MASK
+    #define RD_IDLE    RD_PORT |=  RD_MASK
+    #define WR_ACTIVE  WR_PORT &= ~WR_MASK
+    #define WR_IDLE    WR_PORT |=  WR_MASK
+    #define CD_COMMAND CD_PORT &= ~CD_MASK
+    #define CD_DATA    CD_PORT |=  CD_MASK
+    #define CS_ACTIVE  CS_PORT &= ~CS_MASK
+    #define CS_IDLE    CS_PORT |=  CS_MASK
+
  #else // Leonardo w/Breakout board
 
   #define write8inline(d) {                                                   \
@@ -248,6 +308,17 @@
     DDRE &= ~B01000000; DDRD &= ~B10010011;   \
     DDRC &= ~B01000000; DDRB &= ~B00110000; }
 
+    // When using the TFT breakout board, control pins are configurable.
+    #define RD_ACTIVE  *rdPort &=  rdPinUnset
+    #define RD_IDLE    *rdPort |=  rdPinSet
+    #define WR_ACTIVE  *wrPort &=  wrPinUnset
+    #define WR_IDLE    *wrPort |=  wrPinSet
+    #define CD_COMMAND *cdPort &=  cdPinUnset
+    #define CD_DATA    *cdPort |=  cdPinSet
+    #define CS_ACTIVE  *csPort &=  csPinUnset
+    #define CS_IDLE    *csPort |=  csPinSet
+
+
  #endif
 
   // On the Leonardo, only the write8() macro is used -- though even that
@@ -255,6 +326,7 @@
   // on this board.  You may need to disable this to get any sizable
   // program to compile.
   #define write8 write8inline
+
 
 #elif defined(__SAM3X8E__)
 
@@ -347,46 +419,45 @@
 
 #elif defined(__SAMD21G18A__)
 
-// ThingTank TIJA: Fix for using the Shield with SAMD21 based boards like:
-// Arduino MKR1000, Adafruit Feather M0, ...
-//
-// Some explanations are in order...
-// * You can always communicate to specific digital/analog pins using standard
-//   Arduino functions like digitalWrite(), analogRead(), ... These functions
-//   include some overhead which makes them """"slow"""".
-// * Another way to set pins is to use the memory addresses of the GPIO pins
-//   directly. This is much faster, but obviously much more complicated.
-//
-// The Adafruit code, specifically for 8-bit LCD displays like this one, where
-// you want speed... writes directly to the Atmel registers to control pins
-// and setting them high/low.
-//
-// So to go for speed, we need to do some mapping of the pins where we
-// connected the TFT display to memory addresses. This is done in the following
-// lines which define the PORT and BITMASK to address a specific register.
-//
-// The first part are the LCD control lines that need to be assigned:
-// - RD = Read -> to be wired to pin A0
-// - WR = Write -> to be wired to pin A1
-// - CD = Command/Data -> to be wired to pin A2
-// - CS = Chip Select -> to be wired to pin A3
-//
-// The following code was updated, very heavily inspired by:
-// http://forum.arduino.cc/index.php?topic=334073.msg2308565#msg2308565
-//
-// The analogPinToBitMask and other macros are defined in:
-// packages\arduino\hardware\samd\<version>\variants\mkr1000\variants.h
-// packages\adafruit\hardware\samd\1.0.13\variants\zero_radio\variants.h
-// etc...
-//
-// This code should hence work for all SAMD21 boards that exist in the
-// Arduino framework. Otherwise, you'll need to do more advanced port
-// remapping using:
-//  packages\arduino\tools\CMSIS\4.0.0-atmel\Device\ATMEL\samd21\include\<yourcpu>.h
-//  packages\arduino\tools\CMSIS\4.0.0-atmel\Device\ATMEL\samd21\include\pio\<yourcpu>.h
-//
+    // ThingTank TIJA: Fix for using the Shield with SAMD21 based boards like:
+    // Arduino MKR1000, Adafruit Feather M0, ...
+    //
+    // Some explanations are in order...
+    // * You can always communicate to specific digital/analog pins using standard
+    //   Arduino functions like digitalWrite(), analogRead(), ... These functions
+    //   include some overhead which makes them """"slow"""".
+    // * Another way to set pins is to use the memory addresses of the GPIO pins
+    //   directly. This is much faster, but obviously much more complicated.
+    //
+    // The Adafruit code, specifically for 8-bit LCD displays like this one, where
+    // you want speed... writes directly to the Atmel registers to control pins
+    // and setting them high/low.
+    //
+    // So to go for speed, we need to do some mapping of the pins where we
+    // connected the TFT display to memory addresses. This is done in the following
+    // lines which define the PORT and BITMASK to address a specific register.
+    //
+    // The first part are the LCD control lines that need to be assigned:
+    // - RD = Read -> to be wired to pin A0
+    // - WR = Write -> to be wired to pin A1
+    // - CD = Command/Data -> to be wired to pin A2
+    // - CS = Chip Select -> to be wired to pin A3
+    //
+    // The following code was updated, very heavily inspired by:
+    // http://forum.arduino.cc/index.php?topic=334073.msg2308565#msg2308565
+    //
+    // The analogPinToBitMask and other macros are defined in:
+    // packages\arduino\hardware\samd\<version>\variants\mkr1000\variants.h
+    // packages\adafruit\hardware\samd\1.0.13\variants\zero_radio\variants.h
+    // etc...
+    //
+    // This code should hence work for all SAMD21 boards that exist in the
+    // Arduino framework. Otherwise, you'll need to do more advanced port
+    // remapping using:
+    //  packages\arduino\tools\CMSIS\4.0.0-atmel\Device\ATMEL\samd21\include\<yourcpu>.h
+    //  packages\arduino\tools\CMSIS\4.0.0-atmel\Device\ATMEL\samd21\include\pio\<yourcpu>.h
+    //
 
-  #ifdef USE_ADAFRUIT_SHIELD_PINOUT
 
     #define RD_PORT digitalPinToPort(PIN_A0)    /*pin A0 */
     #define WR_PORT digitalPinToPort(PIN_A1)    /*pin A1 */
@@ -517,6 +588,13 @@
      // drawing method.  The default state has them initialized for writes.
 
 
+    // Implementation note: the following two macro's are horrible. They are
+    // just copies of the relevant parts of pinMode() from wiring_digital.c
+    // -> For greater compatibility, it is probably better to replace this
+    // with the Arduino functions.
+    // -> Optimization can be done by writing to WRCONFIG registers.
+    // TODO: Optimize this... 
+
     #define setWriteDirInline() { \
       SAMD21_LCD1PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA1)].bit.INEN = 1; \
       SAMD21_LCD1PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA1)].bit.PULLEN = 0; \
@@ -592,77 +670,87 @@
      //#define writeRegister16   writeRegister16inline
      //#define writeRegisterPair writeRegisterPairInline
 
-
-   #else  // USE_ADAFRUIT_SHIELD_PINOUT
-
-      // ThingTank TIJA: This was not touched and just copied from Due section.
-      // Guaranteed to fail...
-
-       #define write8inline(d) { \
-   	  	PIO_Set(PIOC, (((d) & 0xFF)<<1)); \
-   	  	PIO_Clear(PIOC, (((~d) & 0xFF)<<1)); \
-   	  	WR_STROBE; }
-
-       #define read8inline(result) { \
-   	  	RD_ACTIVE;   \
-   	  	delayMicroseconds(1);      \
-   	  	result = ((PIOC->PIO_PDSR & 0x1FE) >> 1); \
-   	  	RD_IDLE;}
-
-       #define setWriteDirInline() { \
-   	     PIOC->PIO_MDDR |=  0x000001FE; /*PIOC->PIO_SODR |=  0x000001FE;*/ PIOC->PIO_OER |=  0x000001FE; PIOC->PIO_PER |=  0x000001FE; }
-
-       #define setReadDirInline() { \
-   	  	pmc_enable_periph_clk( ID_PIOC ) ; \
-   	  	PIOC->PIO_PUDR |=  0x000001FE; PIOC->PIO_IFDR |=  0x000001FE; PIOC->PIO_ODR |=  0x000001FE; PIOC->PIO_PER |=  0x000001FE; }
-
-       // When using the TFT breakout board, control pins are configurable.
-       #define RD_ACTIVE	rdPort->PIO_CODR |= rdPinSet		//PIO_Clear(rdPort, rdPinSet)
-       #define RD_IDLE		rdPort->PIO_SODR |= rdPinSet		//PIO_Set(rdPort, rdPinSet)
-       #define WR_ACTIVE	wrPort->PIO_CODR |= wrPinSet		//PIO_Clear(wrPort, wrPinSet)
-       #define WR_IDLE		wrPort->PIO_SODR |= wrPinSet		//PIO_Set(wrPort, wrPinSet)
-       #define CD_COMMAND	cdPort->PIO_CODR |= cdPinSet		//PIO_Clear(cdPort, cdPinSet)
-       #define CD_DATA		cdPort->PIO_SODR |= cdPinSet		//PIO_Set(cdPort, cdPinSet)
-       #define CS_ACTIVE	csPort->PIO_CODR |= csPinSet		//PIO_Clear(csPort, csPinSet)
-       #define CS_IDLE		csPort->PIO_SODR |= csPinSet		//PIO_Set(csPort, csPinSet)
-  #endif // USE_ADAFRUIT_SHIELD_PINOUT
-
 #else
 
- #error "Board type unsupported / not recognized"
+  // ThingTank TIJA:
+  // This is a rewrite of all of the above using standard Arduino functions.
+  // That'll make sure that this library can be used, but probably not at the
+  // high speed you are going for when using 8-bit parallel processing.
+  //
+  // I've written it here just to avoid the nasty compiler error, and to get
+  // this working on all Arduino boards.
 
-#endif
 
-#if !(defined(__SAM3X8E__)||defined(__SAMD21G18A__))
-// Stuff common to all Arduino AVR board types:
+  // ThingTank TIJA:
+  // Here, you supply the pins you are using for each of the functions.
+  // I've randomly taken some so better fix this if you want to get it working
+  // for your configuration.
 
-#ifdef USE_ADAFRUIT_SHIELD_PINOUT
+  #define TTLCD_DATA1 8
+  #define TTLCD_DATA2 9
+  #define TTLCD_DATA3 10
+  #define TTLCD_DATA4 11
+  #define TTLCD_DATA5 4
+  #define TTLCD_DATA6 13
+  #define TTLCD_DATA7 6
+  #define TTLCD_DATA8 analogInputToDigitalPin(PIN_A4)
+  #define TTLCD_READ PIN_A0
+  #define TTLCD_WRITE PIN_A1
+  #define TTLCD_CMDDATA PIN_A2
+  #define TTLCD_CSELECT PIN_A3
 
- // Control signals are ACTIVE LOW (idle is HIGH)
- // Command/Data: LOW = command, HIGH = data
- // These are single-instruction operations and always inline
- #define RD_ACTIVE  RD_PORT &= ~RD_MASK
- #define RD_IDLE    RD_PORT |=  RD_MASK
- #define WR_ACTIVE  WR_PORT &= ~WR_MASK
- #define WR_IDLE    WR_PORT |=  WR_MASK
- #define CD_COMMAND CD_PORT &= ~CD_MASK
- #define CD_DATA    CD_PORT |=  CD_MASK
- #define CS_ACTIVE  CS_PORT &= ~CS_MASK
- #define CS_IDLE    CS_PORT |=  CS_MASK
+  // Control signals are ACTIVE LOW (idle is HIGH)
+  // Command/Data: LOW = command, HIGH = data
+  // These are single-instruction operations and always inline
+  #define RD_ACTIVE  digitalWrite(TTLCD_READ, LOW)
+  #define RD_IDLE    digitalWrite(TTLCD_READ, HIGH)
+  #define WR_ACTIVE  digitalWrite(TTLCD_WRITE, LOW)
+  #define WR_IDLE    digitalWrite(TTLCD_WRITE, HIGH)
+  #define CD_COMMAND digitalWrite(TTLCD_CMDDATA, LOW)
+  #define CD_DATA    digitalWrite(TTLCD_CMDDATA, HIGH)
+  #define CS_ACTIVE  digitalWrite(TTLCD_CSELECT, LOW)
+  #define CS_IDLE    digitalWrite(TTLCD_CSELECT, HIGH)
 
-#else // Breakout board
+  #define read8inline(result) { \
+   RD_ACTIVE;   \
+   delayMicroseconds(1);      \
+   result = (digitalRead(TTLCD_DATA8) >> 7 | digitalRead(TTLCD_DATA7) >> 6 | digitalRead(TTLCD_DATA6) >> 5 | digitalRead(TTLCD_DATA5) >> 4 | \
+             digitalRead(TTLCD_DATA4) >> 3 | digitalRead(TTLCD_DATA3) >> 2 | digitalRead(TTLCD_DATA2) >> 1 | digitalRead(TTLCD_DATA1) >> 0); \
+   RD_IDLE; }
 
- // When using the TFT breakout board, control pins are configurable.
- #define RD_ACTIVE  *rdPort &=  rdPinUnset
- #define RD_IDLE    *rdPort |=  rdPinSet
- #define WR_ACTIVE  *wrPort &=  wrPinUnset
- #define WR_IDLE    *wrPort |=  wrPinSet
- #define CD_COMMAND *cdPort &=  cdPinUnset
- #define CD_DATA    *cdPort |=  cdPinSet
- #define CS_ACTIVE  *csPort &=  csPinUnset
- #define CS_IDLE    *csPort |=  csPinSet
+   #define write8inline(d) { \
+     digitalWrite(TTLCD_DATA1,(d) & 0x01); \
+     digitalWrite(TTLCD_DATA2,(d) & 0x02); \
+     digitalWrite(TTLCD_DATA3,(d) & 0x04); \
+     digitalWrite(TTLCD_DATA4,(d) & 0x08); \
+     digitalWrite(TTLCD_DATA5,(d) & 0x10); \
+     digitalWrite(TTLCD_DATA6,(d) & 0x20); \
+     digitalWrite(TTLCD_DATA7,(d) & 0x40); \
+     digitalWrite(TTLCD_DATA8,(d) & 0x80); \
+     WR_STROBE; }
 
-#endif
+   #define setWriteDirInline() { \
+     pinMode(TTLCD_DATA1, OUTPUT); \
+     pinMode(TTLCD_DATA2, OUTPUT); \
+     pinMode(TTLCD_DATA3, OUTPUT); \
+     pinMode(TTLCD_DATA4, OUTPUT); \
+     pinMode(TTLCD_DATA5, OUTPUT); \
+     pinMode(TTLCD_DATA6, OUTPUT); \
+     pinMode(TTLCD_DATA7, OUTPUT); \
+     pinMode(TTLCD_DATA8, OUTPUT); \
+   }
+
+   #define setReadDirInline() { \
+     pinMode(TTLCD_DATA1, INPUT_PULLDOWN); \
+     pinMode(TTLCD_DATA2, INPUT_PULLDOWN); \
+     pinMode(TTLCD_DATA3, INPUT_PULLDOWN); \
+     pinMode(TTLCD_DATA4, INPUT_PULLDOWN); \
+     pinMode(TTLCD_DATA5, INPUT_PULLDOWN); \
+     pinMode(TTLCD_DATA6, INPUT_PULLDOWN); \
+     pinMode(TTLCD_DATA7, INPUT_PULLDOWN); \
+     pinMode(TTLCD_DATA8, INPUT_PULLDOWN); \
+   }
+
 #endif
 
 // Data write strobe, ~2 instructions and always inline
