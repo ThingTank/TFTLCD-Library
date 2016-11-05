@@ -4,7 +4,16 @@
 // Graphics library by ladyada/adafruit with init code from Rossum
 // MIT license
 
-#if defined(__SAM3X8E__)||defined(__SAMD21G18A__)
+#define DEBUG
+#ifdef DEBUG
+  #define DEBUGPRINT(str) Serial.println(str);
+	#define DEBUGPRINT2(str) Serial.print(str);
+#else
+  #define DEBUGPRINT(str)
+	#define DEBUGPRINT2(str)
+#endif
+
+#if defined(__SAM3X8E__)
 	#include <include/pio.h>
     #define PROGMEM
     #define pgm_read_byte(addr) (*(const unsigned char *)(addr))
@@ -79,16 +88,19 @@ Adafruit_TFTLCD::Adafruit_TFTLCD(
     wrPort->PIO_SODR  |=  wrPinSet;
     rdPort->PIO_SODR  |=  rdPinSet;
   #endif
+
+	DEBUGPRINT("*** Adafruit_TFTLCD: Enabling outputs for display control")
   pinMode(cs, OUTPUT);    // Enable outputs
   pinMode(cd, OUTPUT);
   pinMode(wr, OUTPUT);
   pinMode(rd, OUTPUT);
+	DEBUGPRINT("*** Adafruit_TFTLCD: Performing TFT reset")
   if(reset) {
     digitalWrite(reset, HIGH);
     pinMode(reset, OUTPUT);
   }
 #endif
-
+  DEBUGPRINT("*** Adafruit_TFTLCD: Initializing display")
   init();
 }
 
@@ -101,18 +113,24 @@ Adafruit_TFTLCD::Adafruit_TFTLCD(void) : Adafruit_GFX(TFTWIDTH, TFTHEIGHT) {
 void Adafruit_TFTLCD::init(void) {
 
 #ifdef USE_ADAFRUIT_SHIELD_PINOUT
+  DEBUGPRINT("*** Adafruit_TFTLCD: INIT - CS_IDLE")
   CS_IDLE; // Set all control bits to idle state
+	DEBUGPRINT("*** Adafruit_TFTLCD: INIT - WR_IDLE")
   WR_IDLE;
+	DEBUGPRINT("*** Adafruit_TFTLCD: INIT - RD_IDLE")
   RD_IDLE;
+	DEBUGPRINT("*** Adafruit_TFTLCD: INIT - CD_DATA")
   CD_DATA;
-  digitalWrite(5, HIGH); // Reset line
+//	DEBUGPRINT("*** Adafruit_TFTLCD: INIT - Reset display")
+//  digitalWrite(A4, HIGH); // Reset line
+	DEBUGPRINT("*** Adafruit_TFTLCD: INIT - Pins to Output")
   pinMode(A3, OUTPUT);   // Enable outputs
   pinMode(A2, OUTPUT);
   pinMode(A1, OUTPUT);
   pinMode(A0, OUTPUT);
-  pinMode( 5, OUTPUT);
+//  pinMode(A4, OUTPUT);
 #endif
-
+  DEBUGPRINT("*** Adafruit_TFTLCD: INIT - Set Write Direction")
   setWriteDir(); // Set up LCD data port(s) for WRITE operations
 
   rotation  = 0;
@@ -121,6 +139,7 @@ void Adafruit_TFTLCD::init(void) {
   textcolor = 0xFFFF;
   _width    = TFTWIDTH;
   _height   = TFTHEIGHT;
+	DEBUGPRINT("*** Adafruit_TFTLCD: INIT - DONE!!")
 }
 
 // Initialization command tables for different LCD controllers
@@ -971,7 +990,26 @@ void Adafruit_TFTLCD::write8(uint8_t value) {
 #ifdef read8isFunctionalized
 uint8_t Adafruit_TFTLCD::read8fn(void) {
   uint8_t result;
-  read8inline(result);
+//  read8inline(result);
+	RD_ACTIVE;
+	delayMicroseconds(1);
+	uint8_t data8 = digitalRead(TTLCD_DATA8);
+	uint8_t data7 = digitalRead(TTLCD_DATA7);
+	uint8_t data6 = digitalRead(TTLCD_DATA6);
+	uint8_t data5 = digitalRead(TTLCD_DATA5);
+	uint8_t data4 = digitalRead(TTLCD_DATA4);
+	uint8_t data3 = digitalRead(TTLCD_DATA3);
+	uint8_t data2 = digitalRead(TTLCD_DATA2);
+	uint8_t data1 = digitalRead(TTLCD_DATA1);
+	DEBUGPRINT2("READ: Bx");
+	DEBUGPRINT2(data8); DEBUGPRINT2(data7); DEBUGPRINT2(data6); DEBUGPRINT2(data5);DEBUGPRINT2(data4); DEBUGPRINT2(data3); DEBUGPRINT2(data2); DEBUGPRINT2(data1);
+	result = ((data8 << 7) | (data7 << 6) | (data6 << 5) | (data5 << 4) | \
+					(data4 << 3) | (data3 << 2) | (data2 << 1) | data1);
+	RD_IDLE;
+	DEBUGPRINT2(" - Should be: "); DEBUGPRINT(result);
+	DEBUGPRINT((data8<<7));
+		DEBUGPRINT((data7 << 6));
+			DEBUGPRINT((data6 << 5));
   return result;
 }
 #endif
@@ -984,7 +1022,7 @@ void Adafruit_TFTLCD::setWriteDir(void) {
 
 #ifndef setReadDir
 void Adafruit_TFTLCD::setReadDir(void) {
-  setReadDirInline();
+    setReadDirInline();
 }
 #endif
 

@@ -417,7 +417,7 @@
 
  #endif
 
-#elif defined(__SAMD21G18A__)
+#elif defined(__SAMD21G18A__REMOVEMEWHENFIXED)
 
     // ThingTank TIJA: Fix for using the Shield with SAMD21 based boards like:
     // Arduino MKR1000, Adafruit Feather M0, ...
@@ -495,14 +495,14 @@
     // You must enter ARDUINO Digital Pin numbers here!!!
     // (lateron, they are mapped to the SAMD port numbers)
 
-    #define SAMD21_LCDDATA1 8
-    #define SAMD21_LCDDATA2 9
-    #define SAMD21_LCDDATA3 10
-    #define SAMD21_LCDDATA4 11
-    #define SAMD21_LCDDATA5 4
-    #define SAMD21_LCDDATA6 13
-    #define SAMD21_LCDDATA7 6
-    #define SAMD21_LCDDATA8 analogInputToDigitalPin(PIN_A0)
+    #define SAMD21_LCDDATA1 analogInputToDigitalPin(PIN_A4)
+    #define SAMD21_LCDDATA2 12
+    #define SAMD21_LCDDATA3 11
+    #define SAMD21_LCDDATA4 10
+    #define SAMD21_LCDDATA5 9
+    #define SAMD21_LCDDATA6 6
+    #define SAMD21_LCDDATA7 5
+    #define SAMD21_LCDDATA8 analogInputToDigitalPin(PIN_A5)
 
     // ThingTank TIJA: The following are macro's which we define for reading and
     // writing data...
@@ -593,59 +593,83 @@
     // -> For greater compatibility, it is probably better to replace this
     // with the Arduino functions.
     // -> Optimization can be done by writing to WRCONFIG registers.
-    // TODO: Optimize this... 
+    // TODO: Optimize this...
 
-    #define setWriteDirInline() { \
-      SAMD21_LCD1PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA1)].bit.INEN = 1; \
-      SAMD21_LCD1PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA1)].bit.PULLEN = 0; \
-      SAMD21_LCD1PORT->DIRSET.reg = digitalPinToBitMask(SAMD21_LCDDATA1); \
-      SAMD21_LCD2PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA2)].bit.INEN = 1; \
-      SAMD21_LCD2PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA2)].bit.PULLEN = 0; \
-      SAMD21_LCD2PORT->DIRSET.reg = digitalPinToBitMask(SAMD21_LCDDATA2); \
-      SAMD21_LCD3PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA3)].bit.INEN = 1; \
-      SAMD21_LCD3PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA3)].bit.PULLEN = 0; \
-      SAMD21_LCD3PORT->DIRSET.reg = digitalPinToBitMask(SAMD21_LCDDATA3); \
-      SAMD21_LCD4PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA4)].bit.INEN = 1; \
-      SAMD21_LCD4PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA4)].bit.PULLEN = 0; \
-      SAMD21_LCD4PORT->DIRSET.reg = digitalPinToBitMask(SAMD21_LCDDATA4); \
-      SAMD21_LCD5PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA5)].bit.INEN = 1; \
-      SAMD21_LCD5PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA5)].bit.PULLEN = 0; \
-      SAMD21_LCD5PORT->DIRSET.reg = digitalPinToBitMask(SAMD21_LCDDATA5); \
-      SAMD21_LCD6PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA6)].bit.INEN = 1; \
-      SAMD21_LCD6PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA6)].bit.PULLEN = 0; \
-      SAMD21_LCD6PORT->DIRSET.reg = digitalPinToBitMask(SAMD21_LCDDATA6); \
-      SAMD21_LCD7PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA7)].bit.INEN = 1; \
-      SAMD21_LCD7PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA7)].bit.PULLEN = 0; \
-      SAMD21_LCD7PORT->DIRSET.reg = digitalPinToBitMask(SAMD21_LCDDATA7); \
-      SAMD21_LCD8PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA8)].bit.INEN = 1; \
-      SAMD21_LCD8PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA8)].bit.PULLEN = 0; \
-      SAMD21_LCD8PORT->DIRSET.reg = digitalPinToBitMask(SAMD21_LCDDATA8); }
+    // #define setWriteDirInline() { \
+    //   SAMD21_LCD1PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA1)].bit.INEN = 1; \
+    //   SAMD21_LCD1PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA1)].bit.PULLEN = 0; \
+    //   SAMD21_LCD1PORT->DIRSET.reg = digitalPinToBitMask(SAMD21_LCDDATA1); \
+    //   SAMD21_LCD2PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA2)].bit.INEN = 1; \
+    //   SAMD21_LCD2PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA2)].bit.PULLEN = 0; \
+    //   SAMD21_LCD2PORT->DIRSET.reg = digitalPinToBitMask(SAMD21_LCDDATA2); \
+    //   SAMD21_LCD3PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA3)].bit.INEN = 1; \
+    //   SAMD21_LCD3PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA3)].bit.PULLEN = 0; \
+    //   SAMD21_LCD3PORT->DIRSET.reg = digitalPinToBitMask(SAMD21_LCDDATA3); \
+    //   SAMD21_LCD4PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA4)].bit.INEN = 1; \
+    //   SAMD21_LCD4PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA4)].bit.PULLEN = 0; \
+    //   SAMD21_LCD4PORT->DIRSET.reg = digitalPinToBitMask(SAMD21_LCDDATA4); \
+    //   SAMD21_LCD5PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA5)].bit.INEN = 1; \
+    //   SAMD21_LCD5PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA5)].bit.PULLEN = 0; \
+    //   SAMD21_LCD5PORT->DIRSET.reg = digitalPinToBitMask(SAMD21_LCDDATA5); \
+    //   SAMD21_LCD6PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA6)].bit.INEN = 1; \
+    //   SAMD21_LCD6PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA6)].bit.PULLEN = 0; \
+    //   SAMD21_LCD6PORT->DIRSET.reg = digitalPinToBitMask(SAMD21_LCDDATA6); \
+    //   SAMD21_LCD7PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA7)].bit.INEN = 1; \
+    //   SAMD21_LCD7PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA7)].bit.PULLEN = 0; \
+    //   SAMD21_LCD7PORT->DIRSET.reg = digitalPinToBitMask(SAMD21_LCDDATA7); \
+    //   SAMD21_LCD8PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA8)].bit.INEN = 1; \
+    //   SAMD21_LCD8PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA8)].bit.PULLEN = 0; \
+    //   SAMD21_LCD8PORT->DIRSET.reg = digitalPinToBitMask(SAMD21_LCDDATA8); }
+    //
+    // #define setReadDirInline() { \
+    //   SAMD21_LCD1PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA1)].reg=(uint8_t)(PORT_PINCFG_INEN|PORT_PINCFG_PULLEN); \
+    //   SAMD21_LCD1PORT->DIRCLR.reg = digitalPinToBitMask(SAMD21_LCDDATA1);  \
+    //   SAMD21_LCD1PORT->OUTCLR.reg = digitalPinToBitMask(SAMD21_LCDDATA1);  \
+    //   SAMD21_LCD2PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA2)].reg=(uint8_t)(PORT_PINCFG_INEN|PORT_PINCFG_PULLEN); \
+    //   SAMD21_LCD2PORT->DIRCLR.reg = digitalPinToBitMask(SAMD21_LCDDATA2);  \
+    //   SAMD21_LCD2PORT->OUTCLR.reg = digitalPinToBitMask(SAMD21_LCDDATA2);  \
+    //   SAMD21_LCD3PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA3)].reg=(uint8_t)(PORT_PINCFG_INEN|PORT_PINCFG_PULLEN); \
+    //   SAMD21_LCD3PORT->DIRCLR.reg = digitalPinToBitMask(SAMD21_LCDDATA3);  \
+    //   SAMD21_LCD3PORT->OUTCLR.reg = digitalPinToBitMask(SAMD21_LCDDATA3);  \
+    //   SAMD21_LCD4PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA4)].reg=(uint8_t)(PORT_PINCFG_INEN|PORT_PINCFG_PULLEN); \
+    //   SAMD21_LCD4PORT->DIRCLR.reg = digitalPinToBitMask(SAMD21_LCDDATA4);  \
+    //   SAMD21_LCD4PORT->OUTCLR.reg = digitalPinToBitMask(SAMD21_LCDDATA4);  \
+    //   SAMD21_LCD5PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA5)].reg=(uint8_t)(PORT_PINCFG_INEN|PORT_PINCFG_PULLEN); \
+    //   SAMD21_LCD5PORT->DIRCLR.reg = digitalPinToBitMask(SAMD21_LCDDATA5);  \
+    //   SAMD21_LCD5PORT->OUTCLR.reg = digitalPinToBitMask(SAMD21_LCDDATA5);  \
+    //   SAMD21_LCD6PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA6)].reg=(uint8_t)(PORT_PINCFG_INEN|PORT_PINCFG_PULLEN); \
+    //   SAMD21_LCD6PORT->DIRCLR.reg = digitalPinToBitMask(SAMD21_LCDDATA6);  \
+    //   SAMD21_LCD6PORT->OUTCLR.reg = digitalPinToBitMask(SAMD21_LCDDATA6);  \
+    //   SAMD21_LCD7PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA7)].reg=(uint8_t)(PORT_PINCFG_INEN|PORT_PINCFG_PULLEN); \
+    //   SAMD21_LCD7PORT->DIRCLR.reg = digitalPinToBitMask(SAMD21_LCDDATA7);  \
+    //   SAMD21_LCD7PORT->OUTCLR.reg = digitalPinToBitMask(SAMD21_LCDDATA7);  \
+    //   SAMD21_LCD8PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA8)].reg=(uint8_t)(PORT_PINCFG_INEN|PORT_PINCFG_PULLEN); \
+    //   SAMD21_LCD8PORT->DIRCLR.reg = digitalPinToBitMask(SAMD21_LCDDATA8);  \
+    //   SAMD21_LCD8PORT->OUTCLR.reg = digitalPinToBitMask(SAMD21_LCDDATA8); }
 
-    #define setReadDirInline() { \
-      SAMD21_LCD1PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA1)].reg=(uint8_t)(PORT_PINCFG_INEN|PORT_PINCFG_PULLEN); \
-      SAMD21_LCD1PORT->DIRCLR.reg = digitalPinToBitMask(SAMD21_LCDDATA1);  \
-      SAMD21_LCD1PORT->OUTCLR.reg = digitalPinToBitMask(SAMD21_LCDDATA1);  \
-      SAMD21_LCD2PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA2)].reg=(uint8_t)(PORT_PINCFG_INEN|PORT_PINCFG_PULLEN); \
-      SAMD21_LCD2PORT->DIRCLR.reg = digitalPinToBitMask(SAMD21_LCDDATA2);  \
-      SAMD21_LCD2PORT->OUTCLR.reg = digitalPinToBitMask(SAMD21_LCDDATA2);  \
-      SAMD21_LCD3PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA3)].reg=(uint8_t)(PORT_PINCFG_INEN|PORT_PINCFG_PULLEN); \
-      SAMD21_LCD3PORT->DIRCLR.reg = digitalPinToBitMask(SAMD21_LCDDATA3);  \
-      SAMD21_LCD3PORT->OUTCLR.reg = digitalPinToBitMask(SAMD21_LCDDATA3);  \
-      SAMD21_LCD4PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA4)].reg=(uint8_t)(PORT_PINCFG_INEN|PORT_PINCFG_PULLEN); \
-      SAMD21_LCD4PORT->DIRCLR.reg = digitalPinToBitMask(SAMD21_LCDDATA4);  \
-      SAMD21_LCD4PORT->OUTCLR.reg = digitalPinToBitMask(SAMD21_LCDDATA4);  \
-      SAMD21_LCD5PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA5)].reg=(uint8_t)(PORT_PINCFG_INEN|PORT_PINCFG_PULLEN); \
-      SAMD21_LCD5PORT->DIRCLR.reg = digitalPinToBitMask(SAMD21_LCDDATA5);  \
-      SAMD21_LCD5PORT->OUTCLR.reg = digitalPinToBitMask(SAMD21_LCDDATA5);  \
-      SAMD21_LCD6PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA6)].reg=(uint8_t)(PORT_PINCFG_INEN|PORT_PINCFG_PULLEN); \
-      SAMD21_LCD6PORT->DIRCLR.reg = digitalPinToBitMask(SAMD21_LCDDATA6);  \
-      SAMD21_LCD6PORT->OUTCLR.reg = digitalPinToBitMask(SAMD21_LCDDATA6);  \
-      SAMD21_LCD7PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA7)].reg=(uint8_t)(PORT_PINCFG_INEN|PORT_PINCFG_PULLEN); \
-      SAMD21_LCD7PORT->DIRCLR.reg = digitalPinToBitMask(SAMD21_LCDDATA7);  \
-      SAMD21_LCD7PORT->OUTCLR.reg = digitalPinToBitMask(SAMD21_LCDDATA7);  \
-      SAMD21_LCD8PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA8)].reg=(uint8_t)(PORT_PINCFG_INEN|PORT_PINCFG_PULLEN); \
-      SAMD21_LCD8PORT->DIRCLR.reg = digitalPinToBitMask(SAMD21_LCDDATA8);  \
-      SAMD21_LCD8PORT->OUTCLR.reg = digitalPinToBitMask(SAMD21_LCDDATA8); }
+      #define setWriteDirInline() { \
+        pinMode(SAMD21_LCDDATA1, OUTPUT); \
+        pinMode(SAMD21_LCDDATA2, OUTPUT); \
+        pinMode(SAMD21_LCDDATA3, OUTPUT); \
+        pinMode(SAMD21_LCDDATA4, OUTPUT); \
+        pinMode(SAMD21_LCDDATA5, OUTPUT); \
+        pinMode(SAMD21_LCDDATA6, OUTPUT); \
+        pinMode(SAMD21_LCDDATA7, OUTPUT); \
+        pinMode(SAMD21_LCDDATA8, OUTPUT); \
+      }
+
+      #define setReadDirInline() { \
+        pinMode(SAMD21_LCDDATA1, INPUT_PULLDOWN); \
+        pinMode(SAMD21_LCDDATA2, INPUT_PULLDOWN); \
+        pinMode(SAMD21_LCDDATA3, INPUT_PULLDOWN); \
+        pinMode(SAMD21_LCDDATA4, INPUT_PULLDOWN); \
+        pinMode(SAMD21_LCDDATA5, INPUT_PULLDOWN); \
+        pinMode(SAMD21_LCDDATA6, INPUT_PULLDOWN); \
+        pinMode(SAMD21_LCDDATA7, INPUT_PULLDOWN); \
+        pinMode(SAMD21_LCDDATA8, INPUT_PULLDOWN); \
+      }
+
+
 
      // ThingTank TIJA: Here, you can define which commands will be used "inline"
      // (which means: this macro is expanded at the location where the command is
@@ -686,14 +710,15 @@
   // I've randomly taken some so better fix this if you want to get it working
   // for your configuration.
 
-  #define TTLCD_DATA1 8
-  #define TTLCD_DATA2 9
-  #define TTLCD_DATA3 10
-  #define TTLCD_DATA4 11
-  #define TTLCD_DATA5 4
-  #define TTLCD_DATA6 13
-  #define TTLCD_DATA7 6
-  #define TTLCD_DATA8 analogInputToDigitalPin(PIN_A4)
+  #define TTLCD_DATA1 PIN_A4
+  #define TTLCD_DATA2 12
+  #define TTLCD_DATA3 11
+  #define TTLCD_DATA4 10
+  #define TTLCD_DATA5 9
+  #define TTLCD_DATA6 6
+  #define TTLCD_DATA7 5
+  #define TTLCD_DATA8 PIN_A5
+
   #define TTLCD_READ PIN_A0
   #define TTLCD_WRITE PIN_A1
   #define TTLCD_CMDDATA PIN_A2
@@ -714,8 +739,8 @@
   #define read8inline(result) { \
    RD_ACTIVE;   \
    delayMicroseconds(1);      \
-   result = (digitalRead(TTLCD_DATA8) >> 7 | digitalRead(TTLCD_DATA7) >> 6 | digitalRead(TTLCD_DATA6) >> 5 | digitalRead(TTLCD_DATA5) >> 4 | \
-             digitalRead(TTLCD_DATA4) >> 3 | digitalRead(TTLCD_DATA3) >> 2 | digitalRead(TTLCD_DATA2) >> 1 | digitalRead(TTLCD_DATA1) >> 0); \
+   result = ((digitalRead(TTLCD_DATA8) >> 7) | (digitalRead(TTLCD_DATA7) >> 6) | (digitalRead(TTLCD_DATA6) >> 5) | (digitalRead(TTLCD_DATA5) >> 4) | \
+             (digitalRead(TTLCD_DATA4) >> 3) | (digitalRead(TTLCD_DATA3) >> 2) | (digitalRead(TTLCD_DATA2) >> 1) | (digitalRead(TTLCD_DATA1) >> 0)); \
    RD_IDLE; }
 
    #define write8inline(d) { \
@@ -741,14 +766,14 @@
    }
 
    #define setReadDirInline() { \
-     pinMode(TTLCD_DATA1, INPUT_PULLDOWN); \
-     pinMode(TTLCD_DATA2, INPUT_PULLDOWN); \
-     pinMode(TTLCD_DATA3, INPUT_PULLDOWN); \
-     pinMode(TTLCD_DATA4, INPUT_PULLDOWN); \
-     pinMode(TTLCD_DATA5, INPUT_PULLDOWN); \
-     pinMode(TTLCD_DATA6, INPUT_PULLDOWN); \
-     pinMode(TTLCD_DATA7, INPUT_PULLDOWN); \
-     pinMode(TTLCD_DATA8, INPUT_PULLDOWN); \
+     pinMode(TTLCD_DATA1, INPUT); \
+     pinMode(TTLCD_DATA2, INPUT); \
+     pinMode(TTLCD_DATA3, INPUT); \
+     pinMode(TTLCD_DATA4, INPUT); \
+     pinMode(TTLCD_DATA5, INPUT); \
+     pinMode(TTLCD_DATA6, INPUT); \
+     pinMode(TTLCD_DATA7, INPUT); \
+     pinMode(TTLCD_DATA8, INPUT); \
    }
 
 #endif
