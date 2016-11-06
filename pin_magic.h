@@ -417,7 +417,7 @@
 
  #endif
 
-#elif defined(__SAMD21G18A__REMOVEMEWHENFIXED)
+#elif defined(__SAMD21G18A__)
 
     // ThingTank TIJA: Fix for using the Shield with SAMD21 based boards like:
     // Arduino MKR1000, Adafruit Feather M0, ...
@@ -495,14 +495,14 @@
     // You must enter ARDUINO Digital Pin numbers here!!!
     // (lateron, they are mapped to the SAMD port numbers)
 
-    #define SAMD21_LCDDATA1 analogInputToDigitalPin(PIN_A4)
+    #define SAMD21_LCDDATA1 PIN_A4
     #define SAMD21_LCDDATA2 12
     #define SAMD21_LCDDATA3 11
     #define SAMD21_LCDDATA4 10
     #define SAMD21_LCDDATA5 9
     #define SAMD21_LCDDATA6 6
     #define SAMD21_LCDDATA7 5
-    #define SAMD21_LCDDATA8 analogInputToDigitalPin(PIN_A5)
+    #define SAMD21_LCDDATA8 PIN_A5
 
     // ThingTank TIJA: The following are macro's which we define for reading and
     // writing data...
@@ -540,20 +540,42 @@
      // -> This has a 1 or 0 on the location of the SAMD21 port corresponding to that PIN,
      //    so we do some bit shifting to make sure this is at the proper location...
 
-    #define read8inline(result) { \
-     RD_ACTIVE;   \
-     delayMicroseconds(1);      \
-     result = ( \
-       ((*portInputRegister(SAMD21_LCD8PORT) & digitalPinToBitMask(SAMD21_LCDDATA8)) >> (digitalPinToPortPin(SAMD21_LCDDATA8)-7)) | \
-       ((*portInputRegister(SAMD21_LCD7PORT) & digitalPinToBitMask(SAMD21_LCDDATA7)) >> (digitalPinToPortPin(SAMD21_LCDDATA7)-6)) | \
-       ((*portInputRegister(SAMD21_LCD6PORT) & digitalPinToBitMask(SAMD21_LCDDATA6)) >> (digitalPinToPortPin(SAMD21_LCDDATA6)-5)) | \
-       ((*portInputRegister(SAMD21_LCD5PORT) & digitalPinToBitMask(SAMD21_LCDDATA5)) >> (digitalPinToPortPin(SAMD21_LCDDATA5)-4)) | \
-       ((*portInputRegister(SAMD21_LCD4PORT) & digitalPinToBitMask(SAMD21_LCDDATA4)) >> (digitalPinToPortPin(SAMD21_LCDDATA4)-3)) | \
-       ((*portInputRegister(SAMD21_LCD3PORT) & digitalPinToBitMask(SAMD21_LCDDATA3)) >> (digitalPinToPortPin(SAMD21_LCDDATA3)-2)) | \
-       ((*portInputRegister(SAMD21_LCD2PORT) & digitalPinToBitMask(SAMD21_LCDDATA2)) >> (digitalPinToPortPin(SAMD21_LCDDATA2)-1)) | \
-       ((*portInputRegister(SAMD21_LCD1PORT) & digitalPinToBitMask(SAMD21_LCDDATA1)) >> (digitalPinToPortPin(SAMD21_LCDDATA1)-0)) \
-     ); \
-     RD_IDLE; }
+     // The "safe" functions
+    //  #define read8inline(result) { \
+    //   RD_ACTIVE;   \
+    //   delayMicroseconds(1);      \
+    //   result = ((digitalRead(SAMD21_LCDDATA8) << 7) | (digitalRead(SAMD21_LCDDATA7) << 6) | (digitalRead(SAMD21_LCDDATA6) << 5) | (digitalRead(SAMD21_LCDDATA5) << 4) | \
+    //             (digitalRead(SAMD21_LCDDATA4) << 3) | (digitalRead(SAMD21_LCDDATA3) << 2) | (digitalRead(SAMD21_LCDDATA2) << 1) | (digitalRead(SAMD21_LCDDATA1) << 0)); \
+    //   RD_IDLE; }
+
+      // #define write8inline(d) { \
+      //   digitalWrite(SAMD21_LCDDATA1,(d) & 0x01); \
+      //   digitalWrite(SAMD21_LCDDATA2,(d) & 0x02); \
+      //   digitalWrite(SAMD21_LCDDATA3,(d) & 0x04); \
+      //   digitalWrite(SAMD21_LCDDATA4,(d) & 0x08); \
+      //   digitalWrite(SAMD21_LCDDATA5,(d) & 0x10); \
+      //   digitalWrite(SAMD21_LCDDATA6,(d) & 0x20); \
+      //   digitalWrite(SAMD21_LCDDATA7,(d) & 0x40); \
+      //   digitalWrite(SAMD21_LCDDATA8,(d) & 0x80); \
+      //   WR_STROBE; }
+
+      // The fast, unsafe functions
+      #define read8inline(result) { \
+       RD_ACTIVE;   \
+       delayMicroseconds(1);      \
+       result = ( \
+         ((SAMD21_LCD8PORT->IN.reg & digitalPinToBitMask(SAMD21_LCDDATA8)) << -(digitalPinToPortPin(SAMD21_LCDDATA8)-7)) | \
+         ((SAMD21_LCD7PORT->IN.reg & digitalPinToBitMask(SAMD21_LCDDATA7)) >> (digitalPinToPortPin(SAMD21_LCDDATA7)-6)) | \
+         ((SAMD21_LCD6PORT->IN.reg & digitalPinToBitMask(SAMD21_LCDDATA6)) >> (digitalPinToPortPin(SAMD21_LCDDATA6)-5)) | \
+         ((SAMD21_LCD5PORT->IN.reg & digitalPinToBitMask(SAMD21_LCDDATA5)) >> (digitalPinToPortPin(SAMD21_LCDDATA5)-4)) | \
+         ((SAMD21_LCD4PORT->IN.reg & digitalPinToBitMask(SAMD21_LCDDATA4)) >> (digitalPinToPortPin(SAMD21_LCDDATA4)-3)) | \
+         ((SAMD21_LCD3PORT->IN.reg & digitalPinToBitMask(SAMD21_LCDDATA3)) >> (digitalPinToPortPin(SAMD21_LCDDATA3)-2)) | \
+         ((SAMD21_LCD2PORT->IN.reg & digitalPinToBitMask(SAMD21_LCDDATA2)) >> (digitalPinToPortPin(SAMD21_LCDDATA2)-1)) | \
+         ((SAMD21_LCD1PORT->IN.reg & digitalPinToBitMask(SAMD21_LCDDATA1)) >> (digitalPinToPortPin(SAMD21_LCDDATA1)-0)) \
+       ); \
+       RD_IDLE; }
+
+       // TODO: Fix the above, it does not take actual value of digitalPinToPortPin(x) into account, first line needed correction...
 
      // The following macro returns the OUTCLR register if we need to write a 0 to the pin, or the OUTSET register otherwise
      #define portFlexOutputRegister(port,val) ((val>0) ? portOutputSetRegister(port) : portOutputClearRegister(port))
@@ -659,14 +681,14 @@
       }
 
       #define setReadDirInline() { \
-        pinMode(SAMD21_LCDDATA1, INPUT_PULLDOWN); \
-        pinMode(SAMD21_LCDDATA2, INPUT_PULLDOWN); \
-        pinMode(SAMD21_LCDDATA3, INPUT_PULLDOWN); \
-        pinMode(SAMD21_LCDDATA4, INPUT_PULLDOWN); \
-        pinMode(SAMD21_LCDDATA5, INPUT_PULLDOWN); \
-        pinMode(SAMD21_LCDDATA6, INPUT_PULLDOWN); \
-        pinMode(SAMD21_LCDDATA7, INPUT_PULLDOWN); \
-        pinMode(SAMD21_LCDDATA8, INPUT_PULLDOWN); \
+        pinMode(SAMD21_LCDDATA1, INPUT); \
+        pinMode(SAMD21_LCDDATA2, INPUT); \
+        pinMode(SAMD21_LCDDATA3, INPUT); \
+        pinMode(SAMD21_LCDDATA4, INPUT); \
+        pinMode(SAMD21_LCDDATA5, INPUT); \
+        pinMode(SAMD21_LCDDATA6, INPUT); \
+        pinMode(SAMD21_LCDDATA7, INPUT); \
+        pinMode(SAMD21_LCDDATA8, INPUT); \
       }
 
 
@@ -739,8 +761,8 @@
   #define read8inline(result) { \
    RD_ACTIVE;   \
    delayMicroseconds(1);      \
-   result = ((digitalRead(TTLCD_DATA8) >> 7) | (digitalRead(TTLCD_DATA7) >> 6) | (digitalRead(TTLCD_DATA6) >> 5) | (digitalRead(TTLCD_DATA5) >> 4) | \
-             (digitalRead(TTLCD_DATA4) >> 3) | (digitalRead(TTLCD_DATA3) >> 2) | (digitalRead(TTLCD_DATA2) >> 1) | (digitalRead(TTLCD_DATA1) >> 0)); \
+   result = ((digitalRead(TTLCD_DATA8) << 7) | (digitalRead(TTLCD_DATA7) << 6) | (digitalRead(TTLCD_DATA6) << 5) | (digitalRead(TTLCD_DATA5) << 4) | \
+             (digitalRead(TTLCD_DATA4) << 3) | (digitalRead(TTLCD_DATA3) << 2) | (digitalRead(TTLCD_DATA2) << 1) | (digitalRead(TTLCD_DATA1) << 0)); \
    RD_IDLE; }
 
    #define write8inline(d) { \

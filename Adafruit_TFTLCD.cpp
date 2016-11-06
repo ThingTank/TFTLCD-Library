@@ -990,26 +990,7 @@ void Adafruit_TFTLCD::write8(uint8_t value) {
 #ifdef read8isFunctionalized
 uint8_t Adafruit_TFTLCD::read8fn(void) {
   uint8_t result;
-//  read8inline(result);
-	RD_ACTIVE;
-	delayMicroseconds(1);
-	uint8_t data8 = digitalRead(TTLCD_DATA8);
-	uint8_t data7 = digitalRead(TTLCD_DATA7);
-	uint8_t data6 = digitalRead(TTLCD_DATA6);
-	uint8_t data5 = digitalRead(TTLCD_DATA5);
-	uint8_t data4 = digitalRead(TTLCD_DATA4);
-	uint8_t data3 = digitalRead(TTLCD_DATA3);
-	uint8_t data2 = digitalRead(TTLCD_DATA2);
-	uint8_t data1 = digitalRead(TTLCD_DATA1);
-	DEBUGPRINT2("READ: Bx");
-	DEBUGPRINT2(data8); DEBUGPRINT2(data7); DEBUGPRINT2(data6); DEBUGPRINT2(data5);DEBUGPRINT2(data4); DEBUGPRINT2(data3); DEBUGPRINT2(data2); DEBUGPRINT2(data1);
-	result = ((data8 << 7) | (data7 << 6) | (data6 << 5) | (data5 << 4) | \
-					(data4 << 3) | (data3 << 2) | (data2 << 1) | data1);
-	RD_IDLE;
-	DEBUGPRINT2(" - Should be: "); DEBUGPRINT(result);
-	DEBUGPRINT((data8<<7));
-		DEBUGPRINT((data7 << 6));
-			DEBUGPRINT((data6 << 5));
+  read8inline(result);
   return result;
 }
 #endif
