@@ -13,26 +13,26 @@ I've also added code that should make this library portable to other Arduino dev
 
 Speed benchmark in microseconds, using the "GraphicsTest" example, on an AdaFruit Feather M0 Basic Proto board:
 
-Test | Generic code
-:--- | ---:
-Screen fill             | 8799787 
-Text                    | 937758
-Lines                   | 8669701
-Horiz/Vert Lines        | 1093055
-Rectangles (outline)    | 716133
-Rectangles (filled)     | 26619628
-Circles (filled)        | 5139809
-Circles (outline)       | 3785683
-Triangles (outline)     | 2755664
-Triangles (filled)      | 9542007
-Rounded rects (outline) | 1641708
-Rounded rects (filled)  | 29925709
+Test | Generic code | SAMD21 code
+:--- | ---: | ---:
+Screen fill             | 8799787   | 2876835
+Text                    | 937758    | 467650
+Lines                   | 8669701   | 4558891
+Horiz/Vert Lines        | 1093055   | 400925
+Rectangles (outline)    | 716133    | 267931
+Rectangles (filled)     | 26619628  | 9795900
+Circles (filled)        | 5139809   | 2182144
+Circles (outline)       | 3785683   | 1992094
+Triangles (outline)     | 2755664   | 1445209
+Triangles (filled)      | 9542007   | 3632513
+Rounded rects (outline) | 1641708   | 779013
+Rounded rects (filled)  | 29925709  | 10835993
 
 ## Motivation
 You'll quickly realize when working with an [Arduino MKR1000](https://www.arduino.cc/en/Main/ArduinoMKR1000) or [AdaFruit Feather M0](https://www.adafruit.com/product/2772) that the TFT display in 8-bit parallel mode pretty much takes up every pin you have available on the breakout board. Nonetheless, we have a use case where we want to connect these LCDs to the more modern SAMD processors of Atmel like on the [MKR1000](https://www.arduino.cc/en/Main/ArduinoMKR1000) and [AdaFruit Feather M0 board](https://www.adafruit.com/product/2772). On top, there are other boards available with the SAMD21 that expose more pins (have a look at the [SparkFun SAMD21 Dev Breakout](https://www.sparkfun.com/products/13672), which has 5 more digital pins available). So for everybody trying to get one of the AdaFruit LCD's working on those boards, here is a good place to get started.
 
-## Current status (5/Nov/2016)
-Using the ASF functions for SAMD21 was a bit optimistic at first, turned out to be more complex than I thought for an ASF n00b like me. So I focused now on getting the "generic" code operational first. As described above, that code uses the standard Arduino functions to communicate, which introduces quite some overhead (Arduino doing a billion checks for a pin is pulled up or down -- great that they do that but "too safe" for our purposes of speed). The good news: it works! The bad and expected news: it's terribly slow.
+## Current status (6/Nov/2016)
+Optimized the generic code specifically for the SAMD21, using some basic ASF functions. That yielded a speed increase of a factor 2-3x compared to the generic code. More optimization and hence speed increase is possible and needed.
 
 I'm using the following connections in the code, currently partially hard coded (ironing that out):
 
