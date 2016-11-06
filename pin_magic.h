@@ -504,9 +504,6 @@
     #define SAMD21_LCDDATA7 5
     #define SAMD21_LCDDATA8 PIN_A5
 
-    // ThingTank TIJA: The following are macro's which we define for reading and
-    // writing data...
-
     #define SAMD21_LCD1PORT digitalPinToPort(SAMD21_LCDDATA1)
     #define SAMD21_LCD2PORT digitalPinToPort(SAMD21_LCDDATA2)
     #define SAMD21_LCD3PORT digitalPinToPort(SAMD21_LCDDATA3)
@@ -516,6 +513,10 @@
     #define SAMD21_LCD7PORT digitalPinToPort(SAMD21_LCDDATA7)
     #define SAMD21_LCD8PORT digitalPinToPort(SAMD21_LCDDATA8)
 
+
+    // ThingTank TIJA: The following are macro's which we define for reading and
+    // writing data...
+
     #define digitalPinToPortPin(P) g_APinDescription[P].ulPin
 
      // How to read?
@@ -523,43 +524,16 @@
      // - Read the 8 digital pins and form the result
      // - Set the READ control pin idle again
 
-     // LCD Data Bit :    7    6    5    4    3    2    1    0
-     // Digital pin #:    7    6   13    4   11   10    9    8
-     // Uno port/pin :  PD7  PD6  PB5  PD4  PB3  PB2  PB1  PB0
-     // Due port/pin : PC23 PC24 PB27 PC26  PD7 PC29 PC21 PC22
-
      // How to read a bit?
-     // -> First, we map the "Arduino" PIN definition to a port on the SAMD21,
-     //    this is done using: digitalPinToPort(SAMD21_LCDDATA7)
-     // -> Next, we get the INPUT register associated to a specific port:
-     //      portInputRegister(digitalPinToPort(SAMD21_LCDDATA7))
+     // -> First, we get the INPUT register associated to a specific port:
+     //       SAMD21_LCD7PORT->IN.reg
      //    This input register has 1 or 0 on specific locations, defined by
      //    the bitmask of that port.
      // -> So we do an AND with the port's bitmask to do a digital read:
-     //    portInputRegister(digitalPinToPort(SAMD21_LCDDATA7)) & digitalPinToBitMask(SAMD21_LCDDATA7)
+     //       SAMD21_LCD7PORT->IN.reg & digitalPinToBitMask(SAMD21_LCDDATA7)
      // -> This has a 1 or 0 on the location of the SAMD21 port corresponding to that PIN,
      //    so we do some bit shifting to make sure this is at the proper location...
 
-     // The "safe" functions
-    //  #define read8inline(result) { \
-    //   RD_ACTIVE;   \
-    //   delayMicroseconds(1);      \
-    //   result = ((digitalRead(SAMD21_LCDDATA8) << 7) | (digitalRead(SAMD21_LCDDATA7) << 6) | (digitalRead(SAMD21_LCDDATA6) << 5) | (digitalRead(SAMD21_LCDDATA5) << 4) | \
-    //             (digitalRead(SAMD21_LCDDATA4) << 3) | (digitalRead(SAMD21_LCDDATA3) << 2) | (digitalRead(SAMD21_LCDDATA2) << 1) | (digitalRead(SAMD21_LCDDATA1) << 0)); \
-    //   RD_IDLE; }
-
-      // #define write8inline(d) { \
-      //   digitalWrite(SAMD21_LCDDATA1,(d) & 0x01); \
-      //   digitalWrite(SAMD21_LCDDATA2,(d) & 0x02); \
-      //   digitalWrite(SAMD21_LCDDATA3,(d) & 0x04); \
-      //   digitalWrite(SAMD21_LCDDATA4,(d) & 0x08); \
-      //   digitalWrite(SAMD21_LCDDATA5,(d) & 0x10); \
-      //   digitalWrite(SAMD21_LCDDATA6,(d) & 0x20); \
-      //   digitalWrite(SAMD21_LCDDATA7,(d) & 0x40); \
-      //   digitalWrite(SAMD21_LCDDATA8,(d) & 0x80); \
-      //   WR_STROBE; }
-
-      // The fast, unsafe functions
       #define read8inline(result) { \
        RD_ACTIVE;   \
        delayMicroseconds(1);      \
@@ -585,6 +559,7 @@
      // - Clear all other bits to LOW
      // - Then signal LCD that data is to be read, that is the WR_STROBE macro
 
+
      #define write8inline(d) { \
        *portFlexOutputRegister(SAMD21_LCD1PORT,((d) & 0x01)) = digitalPinToBitMask(SAMD21_LCDDATA1); \
        *portFlexOutputRegister(SAMD21_LCD2PORT,((d) & 0x02)) = digitalPinToBitMask(SAMD21_LCDDATA2); \
@@ -596,10 +571,10 @@
        *portFlexOutputRegister(SAMD21_LCD8PORT,((d) & 0x80)) = digitalPinToBitMask(SAMD21_LCDDATA8); \
        WR_STROBE; }
 
-       // Implementation note: I realize this can be done more efficient than 8 separate commands, by directly using
-       // the OUT register instead of OUTCLR/OUTSET. That involves a dedicated choice of the PIN assignment since
-       // then we need to distinguish between PORTA and PORTB for proper bitmasking. The current implementation is
-       // (slightly) slower but more portable to other SAMD21 based devices.
+      // Implementation note: I realize this can be done more efficient than 8 separate commands, by directly using
+      // the OUT register instead of OUTCLR/OUTSET. That involves a dedicated choice of the PIN assignment since
+      // then we need to distinguish between PORTA and PORTB for proper bitmasking. The current implementation is
+      // (slightly) slower but more portable to other SAMD21 based devices.
 
 
      // These set the PORT directions as required before the write and read
@@ -723,10 +698,9 @@
   // That'll make sure that this library can be used, but probably not at the
   // high speed you are going for when using 8-bit parallel processing.
   //
-  // I've written it here just to avoid the nasty compiler error, and to get
-  // this working on all Arduino boards.
+  // I've written it here just to get this working on all Arduino boards.
 
-
+sss
   // ThingTank TIJA:
   // Here, you supply the pins you are using for each of the functions.
   // I've randomly taken some so better fix this if you want to get it working

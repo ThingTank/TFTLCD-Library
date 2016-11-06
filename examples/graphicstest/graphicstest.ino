@@ -38,14 +38,11 @@
 #define YELLOW  0xFFE0
 #define WHITE   0xFFFF
 
-Adafruit_TFTLCD tft(LCD_CS, LCD_CD, LCD_WR, LCD_RD, LCD_RESET);
-// If using the shield, all control and data lines are fixed, and
-// a simpler declaration can optionally be used:
-// Adafruit_TFTLCD tft;
-
 void setup(void) {
+  delay(2000);
   Serial.begin(9600);
   Serial.println(F("TFT LCD test"));
+
 
 #ifdef USE_ADAFRUIT_SHIELD_PINOUT
   Serial.println(F("Using Adafruit 2.8\" TFT Arduino Shield Pinout"));
@@ -53,9 +50,11 @@ void setup(void) {
   Serial.println(F("Using Adafruit 2.8\" TFT Breakout Board Pinout"));
 #endif
 
+  Adafruit_TFTLCD tft = Adafruit_TFTLCD(LCD_CS, LCD_CD, LCD_WR, LCD_RD, LCD_RESET);
+
   Serial.print("TFT size is "); Serial.print(tft.width()); Serial.print("x"); Serial.println(tft.height());
 
-  tft.reset();
+//  tft.reset();
 
   uint16_t identifier = tft.readID();
 
@@ -86,64 +85,64 @@ void setup(void) {
   Serial.println(F("Benchmark                Time (microseconds)"));
 
   Serial.print(F("Screen fill              "));
-  Serial.println(testFillScreen());
+  Serial.println(testFillScreen(tft));
   delay(500);
 
   Serial.print(F("Text                     "));
-  Serial.println(testText());
+  Serial.println(testText(tft));
   delay(3000);
 
   Serial.print(F("Lines                    "));
-  Serial.println(testLines(CYAN));
+  Serial.println(testLines(tft,CYAN));
   delay(500);
 
   Serial.print(F("Horiz/Vert Lines         "));
-  Serial.println(testFastLines(RED, BLUE));
+  Serial.println(testFastLines(tft,RED, BLUE));
   delay(500);
 
   Serial.print(F("Rectangles (outline)     "));
-  Serial.println(testRects(GREEN));
+  Serial.println(testRects(tft,GREEN));
   delay(500);
 
   Serial.print(F("Rectangles (filled)      "));
-  Serial.println(testFilledRects(YELLOW, MAGENTA));
+  Serial.println(testFilledRects(tft,YELLOW, MAGENTA));
   delay(500);
 
   Serial.print(F("Circles (filled)         "));
-  Serial.println(testFilledCircles(10, MAGENTA));
+  Serial.println(testFilledCircles(tft,10, MAGENTA));
 
   Serial.print(F("Circles (outline)        "));
-  Serial.println(testCircles(10, WHITE));
+  Serial.println(testCircles(tft,10, WHITE));
   delay(500);
 
   Serial.print(F("Triangles (outline)      "));
-  Serial.println(testTriangles());
+  Serial.println(testTriangles(tft));
   delay(500);
 
   Serial.print(F("Triangles (filled)       "));
-  Serial.println(testFilledTriangles());
+  Serial.println(testFilledTriangles(tft));
   delay(500);
 
   Serial.print(F("Rounded rects (outline)  "));
-  Serial.println(testRoundRects());
+  Serial.println(testRoundRects(tft));
   delay(500);
 
   Serial.print(F("Rounded rects (filled)   "));
-  Serial.println(testFilledRoundRects());
+  Serial.println(testFilledRoundRects(tft));
   delay(500);
 
   Serial.println(F("Done!"));
 }
 
 void loop(void) {
-  for(uint8_t rotation=0; rotation<4; rotation++) {
-    tft.setRotation(rotation);
-    testText();
+//  for(uint8_t rotation=0; rotation<4; rotation++) {
+//    tft.setRotation(rotation);
+//    testText();
     delay(2000);
-  }
+//  }
 }
 
-unsigned long testFillScreen() {
+unsigned long testFillScreen(Adafruit_TFTLCD tft) {
   unsigned long start = micros();
   tft.fillScreen(BLACK);
   tft.fillScreen(RED);
@@ -153,7 +152,7 @@ unsigned long testFillScreen() {
   return micros() - start;
 }
 
-unsigned long testText() {
+unsigned long testText(Adafruit_TFTLCD tft) {
   tft.fillScreen(BLACK);
   unsigned long start = micros();
   tft.setCursor(0, 0);
@@ -180,7 +179,7 @@ unsigned long testText() {
   return micros() - start;
 }
 
-unsigned long testLines(uint16_t color) {
+unsigned long testLines(Adafruit_TFTLCD tft,uint16_t color) {
   unsigned long start, t;
   int           x1, y1, x2, y2,
                 w = tft.width(),
@@ -231,7 +230,7 @@ unsigned long testLines(uint16_t color) {
   return micros() - start;
 }
 
-unsigned long testFastLines(uint16_t color1, uint16_t color2) {
+unsigned long testFastLines(Adafruit_TFTLCD tft,uint16_t color1, uint16_t color2) {
   unsigned long start;
   int           x, y, w = tft.width(), h = tft.height();
 
@@ -243,7 +242,7 @@ unsigned long testFastLines(uint16_t color1, uint16_t color2) {
   return micros() - start;
 }
 
-unsigned long testRects(uint16_t color) {
+unsigned long testRects(Adafruit_TFTLCD tft,uint16_t color) {
   unsigned long start;
   int           n, i, i2,
                 cx = tft.width()  / 2,
@@ -260,7 +259,7 @@ unsigned long testRects(uint16_t color) {
   return micros() - start;
 }
 
-unsigned long testFilledRects(uint16_t color1, uint16_t color2) {
+unsigned long testFilledRects(Adafruit_TFTLCD tft,uint16_t color1, uint16_t color2) {
   unsigned long start, t = 0;
   int           n, i, i2,
                 cx = tft.width()  / 2 - 1,
@@ -280,7 +279,7 @@ unsigned long testFilledRects(uint16_t color1, uint16_t color2) {
   return t;
 }
 
-unsigned long testFilledCircles(uint8_t radius, uint16_t color) {
+unsigned long testFilledCircles(Adafruit_TFTLCD tft,uint8_t radius, uint16_t color) {
   unsigned long start;
   int x, y, w = tft.width(), h = tft.height(), r2 = radius * 2;
 
@@ -295,7 +294,7 @@ unsigned long testFilledCircles(uint8_t radius, uint16_t color) {
   return micros() - start;
 }
 
-unsigned long testCircles(uint8_t radius, uint16_t color) {
+unsigned long testCircles(Adafruit_TFTLCD tft,uint8_t radius, uint16_t color) {
   unsigned long start;
   int           x, y, r2 = radius * 2,
                 w = tft.width()  + radius,
@@ -313,7 +312,7 @@ unsigned long testCircles(uint8_t radius, uint16_t color) {
   return micros() - start;
 }
 
-unsigned long testTriangles() {
+unsigned long testTriangles(Adafruit_TFTLCD tft) {
   unsigned long start;
   int           n, i, cx = tft.width()  / 2 - 1,
                       cy = tft.height() / 2 - 1;
@@ -332,7 +331,7 @@ unsigned long testTriangles() {
   return micros() - start;
 }
 
-unsigned long testFilledTriangles() {
+unsigned long testFilledTriangles(Adafruit_TFTLCD tft) {
   unsigned long start, t = 0;
   int           i, cx = tft.width()  / 2 - 1,
                    cy = tft.height() / 2 - 1;
@@ -351,7 +350,7 @@ unsigned long testFilledTriangles() {
   return t;
 }
 
-unsigned long testRoundRects() {
+unsigned long testRoundRects(Adafruit_TFTLCD tft) {
   unsigned long start;
   int           w, i, i2,
                 cx = tft.width()  / 2 - 1,
@@ -368,7 +367,7 @@ unsigned long testRoundRects() {
   return micros() - start;
 }
 
-unsigned long testFilledRoundRects() {
+unsigned long testFilledRoundRects(Adafruit_TFTLCD tft) {
   unsigned long start;
   int           i, i2,
                 cx = tft.width()  / 2 - 1,
