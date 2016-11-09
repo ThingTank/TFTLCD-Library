@@ -82,7 +82,7 @@ Adafruit_TFTLCD::Adafruit_TFTLCD(
     *wrPort   |=  wrPinSet;
     *rdPort   |=  rdPinSet;
   #endif
-  #if defined(__SAM3X8E__)||defined(__SAMD21G18A__)
+  #if defined(__SAM3X8E__)
     csPort->PIO_SODR  |=  csPinSet; // Set all control bits to HIGH (idle)
     cdPort->PIO_SODR  |=  cdPinSet; // Signals are ACTIVE LOW
     wrPort->PIO_SODR  |=  wrPinSet;
