@@ -20,8 +20,8 @@
     #define pgm_read_word(addr) (*(const unsigned short *)(addr))
 #endif
 #if defined(__SAMD21G18A__)
-    #define PROGMEM
-    #define pgm_read_byte(addr) (*(const unsigned char *)(addr))
+    #define PROGMEM                                                   // No concept of progmem
+    #define pgm_read_byte(addr) (*(const unsigned char *)(addr))      // Just read actual address
     #define pgm_read_word(addr) (*(const unsigned short *)(addr))
 #endif
 #ifdef __AVR__
@@ -62,7 +62,7 @@ Adafruit_TFTLCD::Adafruit_TFTLCD(
     wrPort     = portOutputRegister(digitalPinToPort(wr));
     rdPort     = portOutputRegister(digitalPinToPort(rd));
   #endif
-  #if defined(__SAM3X8E__)||defined(__SAMD21G18A__)
+  #if defined(__SAM3X8E__)
     csPort     = digitalPinToPort(cs);
     cdPort     = digitalPinToPort(cd);
     wrPort     = digitalPinToPort(wr);
@@ -113,13 +113,9 @@ Adafruit_TFTLCD::Adafruit_TFTLCD(void) : Adafruit_GFX(TFTWIDTH, TFTHEIGHT) {
 void Adafruit_TFTLCD::init(void) {
 
 #ifdef USE_ADAFRUIT_SHIELD_PINOUT
-  DEBUGPRINT("*** Adafruit_TFTLCD: INIT - CS_IDLE")
   CS_IDLE; // Set all control bits to idle state
-	DEBUGPRINT("*** Adafruit_TFTLCD: INIT - WR_IDLE")
   WR_IDLE;
-	DEBUGPRINT("*** Adafruit_TFTLCD: INIT - RD_IDLE")
   RD_IDLE;
-	DEBUGPRINT("*** Adafruit_TFTLCD: INIT - CD_DATA")
   CD_DATA;
 	DEBUGPRINT("*** Adafruit_TFTLCD: INIT - Reset display")
   digitalWrite(A4, HIGH); // Reset line
@@ -128,7 +124,7 @@ void Adafruit_TFTLCD::init(void) {
   pinMode(A2, OUTPUT);
   pinMode(A1, OUTPUT);
   pinMode(A0, OUTPUT);
-//  pinMode(A4, OUTPUT);
+  pinMode(A4, OUTPUT);
 #endif
   DEBUGPRINT("*** Adafruit_TFTLCD: INIT - Set Write Direction")
   setWriteDir(); // Set up LCD data port(s) for WRITE operations
@@ -417,6 +413,7 @@ void Adafruit_TFTLCD::setAddrWindow(int x1, int y1, int x2, int y2) {
      case 1:
       t  = y1;
       y1 = x1;
+      if ( y2>(TFTWIDTH-1) ) y2 = (TFTWIDTH-1);     // stevstrong: https://github.com/adafruit/TFTLCD-Library/issues/26
       x1 = TFTWIDTH  - 1 - y2;
       y2 = x2;
       x2 = TFTWIDTH  - 1 - t;
@@ -437,6 +434,7 @@ void Adafruit_TFTLCD::setAddrWindow(int x1, int y1, int x2, int y2) {
       t  = x1;
       x1 = y1;
       y1 = TFTHEIGHT - 1 - x2;
+      if ( y2>(TFTWIDTH-1) ) y2 = (TFTWIDTH-1);    // stevstrong: https://github.com/adafruit/TFTLCD-Library/issues/26
       x2 = y2;
       y2 = TFTHEIGHT - 1 - t;
       x  = x1;

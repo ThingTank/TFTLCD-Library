@@ -470,18 +470,18 @@
     // ARDUINO ZERO / ZERO PRO
     // SPARKFUN SAMD21 DEV BREAKOUT (not the mini!)
     // *****************************************************************************
-    // Pin connection diagram
+    // Pin connection diagram - regular mode
     // +---------+--------------+--------------
     // + LCD Pin | Arduino pin  | SAMD21G18 PIN
     // +---------+--------------+--------------
-    // |  LCD1   | D2           | PA14
-    // |  LCD2   | D5           | PA15
-    // |  LCD3   | D11          | PA16
-    // |  LCD4   | D13          | PA17
-    // |  LCD5   | D10          | PA18
-    // |  LCD6   | D12          | PA19
-    // |  LCD7   | D6           | PA20
-    // |  LCD8   | D7           | PA21
+    // |  LCD0   | D2           | PA14
+    // |  LCD1   | D5           | PA15
+    // |  LCD2   | D11          | PA16
+    // |  LCD3   | D13          | PA17
+    // |  LCD4   | D10          | PA18
+    // |  LCD5   | D12          | PA19
+    // |  LCD6   | D6           | PA20
+    // |  LCD7   | D7           | PA21
     // +---------+--------------+--------------
     // | RD      | A0           | PA02
     // | WR      | A1           | PB08
@@ -493,6 +493,31 @@
     // Uncomment the following line to use the above board & pin configuration:
     #define SAMD21LCD_ZEROBOARD
 
+    // On top of the following, you can uncomment the HARDCORE mode for those
+    // of you hard core enough to sacrifice the standard I2C bus. This
+    // uses the following wiring:
+    //
+    // +---------+--------------+--------------
+    // + LCD Pin | Arduino pin  | SAMD21G18 PIN
+    // +---------+--------------+--------------
+    // |  LCD0   | D11          | PA16
+    // |  LCD1   | D13          | PA17
+    // |  LCD2   | D10          | PA18
+    // |  LCD3   | D12          | PA19
+    // |  LCD4   | D6           | PA20
+    // |  LCD5   | D7           | PA21
+    // |  LCD6   | SDA = D20    | PA22
+    // |  LCD7   | SCL = D21    | PA23
+    // +---------+--------------+--------------
+    // | RD      | A0           | PA02
+    // | WR      | A1           | PB08
+    // | CD      | A2           | PB09
+    // | CS      | A3           | PA04
+    // | Reset   | A4           | PA05
+    // +---------+--------------+--------------
+    #define SAMD21_LCDZEROBOARD_HARDCORE
+
+
 
     // *****************************************************************************
     // ADAFRUIT FEATHER M0 PROTO
@@ -501,14 +526,14 @@
     // +---------+--------------+--------------
     // + LCD Pin | Arduino pin  | SAMD21G18 PIN
     // +---------+--------------+--------------
-    // |  LCD1   | A4           | PA05
-    // |  LCD2   | D12          | PA19
-    // |  LCD3   | D11          | PA16
-    // |  LCD4   | D10          | PA18
-    // |  LCD5   | D9           | PA07
-    // |  LCD6   | D6           | PA20
-    // |  LCD7   | D5           | PA15
-    // |  LCD8   | A5           | PB02
+    // |  LCD0   | A4           | PA05
+    // |  LCD1   | D12          | PA19
+    // |  LCD2   | D11          | PA16
+    // |  LCD3   | D10          | PA18
+    // |  LCD4   | D9           | PA07
+    // |  LCD5   | D6           | PA20
+    // |  LCD6   | D5           | PA15
+    // |  LCD7   | A5           | PB02
     // +---------+--------------+--------------
     // | RD      | A0           | PA02
     // | WR      | A1           | PB08
@@ -534,67 +559,152 @@
     // =============================================================================
 
     #ifdef SAMD21LCD_ZEROBOARD
-        #pragma message "Adafruit_TFTLCD: Using Arduino Zero SAMD21 implementation"
 
-        #define LCD_PORTMASK (PORT_PA14 | PORT_PA15 | PORT_PA16 | PORT_PA17 | PORT_PA18 | PORT_PA19 | PORT_PA20 | PORT_PA21)
+        #ifndef SAMD21_LCDZEROBOARD_HARDCORE
+            #pragma message "Adafruit_TFTLCD: Using Arduino Zero SAMD21 (regular) implementation"
 
-        // Reading data
-        #define read8inline(result) { \
-         RD_ACTIVE;   \
-         delayMicroseconds(1);      \
-         result = ((REG_PORT_IN0 & LCD_PORTMASK) >> 14); \
-         RD_IDLE; }
+            #define LCD_PORTMASK (PORT_PA14 | PORT_PA15 | PORT_PA16 | PORT_PA17 | PORT_PA18 | PORT_PA19 | PORT_PA20 | PORT_PA21)
 
-         // Writing data
-         #define write8inline(d) { \
-           (REG_PORT_OUTSET0 = ((d) << 14)); \
-           (REG_PORT_OUTCLR0 = ((~d) << 14)); \
-           WR_STROBE; }
+            // Reading data
+            #define read8inline(result) { \
+             RD_ACTIVE;   \
+             delayMicroseconds(1);      \
+             result = ((REG_PORT_IN0 & LCD_PORTMASK) >> 14); \
+             RD_IDLE; }
 
-         // Port directions
-         //
-         // TODO: Optimize using WRCONFIG
-         //
-         #define setWriteDirInline() { \
-           PORT->Group[PORTA].PINCFG[PIN_PA14].bit.INEN = 1; \
-           PORT->Group[PORTA].PINCFG[PIN_PA14].bit.PULLEN = 0; \
-           PORT->Group[PORTA].PINCFG[PIN_PA15].bit.INEN = 1; \
-           PORT->Group[PORTA].PINCFG[PIN_PA15].bit.PULLEN = 0; \
-           PORT->Group[PORTA].PINCFG[PIN_PA16].bit.INEN = 1; \
-           PORT->Group[PORTA].PINCFG[PIN_PA16].bit.PULLEN = 0; \
-           PORT->Group[PORTA].PINCFG[PIN_PA17].bit.INEN = 1; \
-           PORT->Group[PORTA].PINCFG[PIN_PA17].bit.PULLEN = 0; \
-           PORT->Group[PORTA].PINCFG[PIN_PA18].bit.INEN = 1; \
-           PORT->Group[PORTA].PINCFG[PIN_PA18].bit.PULLEN = 0; \
-           PORT->Group[PORTA].PINCFG[PIN_PA19].bit.INEN = 1; \
-           PORT->Group[PORTA].PINCFG[PIN_PA19].bit.PULLEN = 0; \
-           PORT->Group[PORTA].PINCFG[PIN_PA20].bit.INEN = 1; \
-           PORT->Group[PORTA].PINCFG[PIN_PA20].bit.PULLEN = 0; \
-           PORT->Group[PORTA].PINCFG[PIN_PA20].bit.INEN = 1; \
-           PORT->Group[PORTA].PINCFG[PIN_PA20].bit.PULLEN = 0; \
-           REG_PORT_DIRSET0 = LCD_PORTMASK; \
-         }
+             // Writing data
+             #define write8inline(d) { \
+               (REG_PORT_OUTSET0 = ((d) << 14)); \
+               (REG_PORT_OUTCLR0 = ((~d) << 14)); \
+               WR_STROBE; }
 
-         #define setReadDirInline() { \
-           PORT->Group[PORTA].PINCFG[PIN_PA14].reg = (uint8_t)(PORT_PINCFG_INEN|PORT_PINCFG_PULLEN); \
-           PORT->Group[PORTA].PINCFG[PIN_PA14].bit.PULLEN = 0; \
-           PORT->Group[PORTA].PINCFG[PIN_PA15].reg = (uint8_t)(PORT_PINCFG_INEN|PORT_PINCFG_PULLEN); \
-           PORT->Group[PORTA].PINCFG[PIN_PA15].bit.PULLEN = 0; \
-           PORT->Group[PORTA].PINCFG[PIN_PA16].reg = (uint8_t)(PORT_PINCFG_INEN|PORT_PINCFG_PULLEN); \
-           PORT->Group[PORTA].PINCFG[PIN_PA16].bit.PULLEN = 0; \
-           PORT->Group[PORTA].PINCFG[PIN_PA17].reg = (uint8_t)(PORT_PINCFG_INEN|PORT_PINCFG_PULLEN); \
-           PORT->Group[PORTA].PINCFG[PIN_PA17].bit.PULLEN = 0; \
-           PORT->Group[PORTA].PINCFG[PIN_PA18].reg = (uint8_t)(PORT_PINCFG_INEN|PORT_PINCFG_PULLEN); \
-           PORT->Group[PORTA].PINCFG[PIN_PA18].bit.PULLEN = 0; \
-           PORT->Group[PORTA].PINCFG[PIN_PA19].reg = (uint8_t)(PORT_PINCFG_INEN|PORT_PINCFG_PULLEN); \
-           PORT->Group[PORTA].PINCFG[PIN_PA19].bit.PULLEN = 0; \
-           PORT->Group[PORTA].PINCFG[PIN_PA20].reg = (uint8_t)(PORT_PINCFG_INEN|PORT_PINCFG_PULLEN); \
-           PORT->Group[PORTA].PINCFG[PIN_PA20].bit.PULLEN = 0; \
-           PORT->Group[PORTA].PINCFG[PIN_PA21].reg = (uint8_t)(PORT_PINCFG_INEN|PORT_PINCFG_PULLEN); \
-           PORT->Group[PORTA].PINCFG[PIN_PA21].bit.PULLEN = 0; \
-           REG_PORT_DIRCLR0 = LCD_PORTMASK; \
-           REG_PORT_OUTCLR0 = LCD_PORTMASK; \
-         }
+               // Port directions
+               //
+               // From SAMD 21 Guide (http://www.atmel.com/Images/Atmel-42181-SAM-D21_Datasheet.pdf)
+               // Section 23.6.2.2
+               // =================
+               // To use pin number y as an output, write bit y of the DIR register to '1'. This can also be done by writing bit
+               // y in the DIRSET register to '1' - this will avoid disturbing the configuration of other pins in that group. The
+               // y bit in the OUT register must be written to the desired output value.
+               // Similarly, writing an OUTSET bit to '1' will set the corresponding bit in the OUT register to '1'. Writing a bit
+               // in OUTCLR to '1' will set that bit in OUT to zero. Writing a bit in OUTTGL to '1' will toggle that bit in OUT.
+               //
+               // To use pin y as an input, bit y in the DIR register must be written to '0'. This can also be done by writing
+               // bit y in the DIRCLR register to '1' - this will avoid disturbing the configuration of other pins in that group.
+               // The input value can be read from bit y in register IN as soon as the INEN bit in the Pin Configuration
+               // register (PINCFGy.INEN) is written to '1'.
+               //
+               // Therefore, we only need to use DIRSET and DIRCLR to set input/output directions. For reading, we also
+               // need to set INEN. For that we used the WRCONFIG register.
+
+               #define setWriteDirInline() { \
+                 REG_PORT_DIRSET0 = LCD_PORTMASK; \
+               }
+
+               // The Write Configuration register (WRCONFIG) requires the
+               // pins to to grouped into two 16-bit half-words - split them out here
+               #define LCD_LOWERPINMASK (LCD_PORTMASK & 0xFFFF)
+               #define LCD_UPPERPINMASK (LCD_PORTMASK & 0xFFFF0000 >> 16)
+
+               #define setReadDirInline() { \
+                 REG_PORT_WRCONFIG0 = (PORT_WRCONFIG_PINMASK(LCD_LOWERPINMASK) | PORT_WRCONFIG_INEN | PORT_WRCONFIG_PULLEN | PORT_WRCONFIG_WRPINCFG); \
+                 REG_PORT_WRCONFIG0 = (PORT_WRCONFIG_PINMASK(LCD_UPPERPINMASK) | PORT_WRCONFIG_INEN | PORT_WRCONFIG_PULLEN | PORT_WRCONFIG_WRPINCFG | PORT_WRCONFIG_HWSEL); \
+                 REG_PORT_DIRCLR0 = LCD_PORTMASK; \
+               }
+        #else
+            #pragma message "Adafruit_TFTLCD: Using Arduino Zero SAMD21 (h4rdc0r3) implementation"
+
+            // Hardcore mode, optimizes further by splitting the 32-bit port register into 8 bit parts,
+            // for example:
+            //    REG_PORT_IN0+1 for accessing PA08-15
+            //    REG_PORT_IN0+2 for accessing PA16-23
+            // That allows to use 8 bit operations instead of full 32 bit operations, see:
+            // http://community.atmel.com/comment/1676586#comment-1676586
+            //
+            // Unfortunately that means we need to sacrifice the I2C port. It will be sadly missed...
+            #define LCD_PORTMASK (PORT_PA16 | PORT_PA17 | PORT_PA18 | PORT_PA19 | PORT_PA20 | PORT_PA21 | PORT_PA22 | PORT_PA23)
+
+            // Reading data
+            #define read8inline(result) { \
+             RD_ACTIVE;   \
+             delayMicroseconds(1);      \
+             result = REG_ACCESS(RoReg8, ((void*)&REG_PORT_IN0)+2); \
+             RD_IDLE; }
+
+             // Writing data
+             #define write8inline(d) { \
+               REG_ACCESS(RwReg8, ((void*)&REG_PORT_OUTSET0)+2) = (RwReg8)(d); \
+               REG_ACCESS(RwReg8, ((void*)&REG_PORT_OUTCLR0)+2) = (RwReg8)(~d); \
+               WR_STROBE; }
+
+             // In this case, there is only an upper pin mask...
+             #define LCD_UPPERPINMASK (LCD_PORTMASK & 0xFFFF0000 >> 16)
+
+             #define setReadDirInline() { \
+               REG_PORT_WRCONFIG0 = (PORT_WRCONFIG_PINMASK(LCD_UPPERPINMASK) | PORT_WRCONFIG_INEN | PORT_WRCONFIG_PULLEN | PORT_WRCONFIG_WRPINCFG | PORT_WRCONFIG_HWSEL); \
+               REG_PORT_DIRCLR0 = LCD_PORTMASK; \
+             }
+
+            //  #define setWriteDirInline() { \
+            //    REG_PORT_WRCONFIG0 = ((PORT_WRCONFIG_PINMASK(LCD_UPPERPINMASK) | PORT_WRCONFIG_INEN |  PORT_WRCONFIG_WRPINCFG | PORT_WRCONFIG_HWSEL) & (~(PORT_WRCONFIG_PULLEN))); \
+            //    REG_PORT_DIRSET0 = LCD_PORTMASK; \
+            //  }
+
+            // TODO: For some reason the WRCONFIG does not work when using
+            // the I2C pins. I guess more configuration work is needed to
+            // get them to work... fallback to generic code for now...
+
+            // Pin definitions
+            #define SAMD21_LCDDATA1 11
+            #define SAMD21_LCDDATA2 13
+            #define SAMD21_LCDDATA3 10
+            #define SAMD21_LCDDATA4 12
+            #define SAMD21_LCDDATA5 6
+            #define SAMD21_LCDDATA6 7
+            #define SAMD21_LCDDATA7 20
+            #define SAMD21_LCDDATA8 21
+
+            // Port definitions
+            #define SAMD21_LCD1PORT digitalPinToPort(SAMD21_LCDDATA1)
+            #define SAMD21_LCD2PORT digitalPinToPort(SAMD21_LCDDATA2)
+            #define SAMD21_LCD3PORT digitalPinToPort(SAMD21_LCDDATA3)
+            #define SAMD21_LCD4PORT digitalPinToPort(SAMD21_LCDDATA4)
+            #define SAMD21_LCD5PORT digitalPinToPort(SAMD21_LCDDATA5)
+            #define SAMD21_LCD6PORT digitalPinToPort(SAMD21_LCDDATA6)
+            #define SAMD21_LCD7PORT digitalPinToPort(SAMD21_LCDDATA7)
+            #define SAMD21_LCD8PORT digitalPinToPort(SAMD21_LCDDATA8)
+
+            #define digitalPinToPortPin(P) g_APinDescription[P].ulPin
+
+            #define setWriteDirInline() { \
+                 SAMD21_LCD1PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA1)].bit.INEN = 1; \
+                 SAMD21_LCD1PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA1)].bit.PULLEN = 0; \
+                 SAMD21_LCD1PORT->DIRSET.reg = digitalPinToBitMask(SAMD21_LCDDATA1); \
+                 SAMD21_LCD2PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA2)].bit.INEN = 1; \
+                 SAMD21_LCD2PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA2)].bit.PULLEN = 0; \
+                 SAMD21_LCD2PORT->DIRSET.reg = digitalPinToBitMask(SAMD21_LCDDATA2); \
+                 SAMD21_LCD3PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA3)].bit.INEN = 1; \
+                 SAMD21_LCD3PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA3)].bit.PULLEN = 0; \
+                 SAMD21_LCD3PORT->DIRSET.reg = digitalPinToBitMask(SAMD21_LCDDATA3); \
+                 SAMD21_LCD4PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA4)].bit.INEN = 1; \
+                 SAMD21_LCD4PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA4)].bit.PULLEN = 0; \
+                 SAMD21_LCD4PORT->DIRSET.reg = digitalPinToBitMask(SAMD21_LCDDATA4); \
+                 SAMD21_LCD5PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA5)].bit.INEN = 1; \
+                 SAMD21_LCD5PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA5)].bit.PULLEN = 0; \
+                 SAMD21_LCD5PORT->DIRSET.reg = digitalPinToBitMask(SAMD21_LCDDATA5); \
+                 SAMD21_LCD6PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA6)].bit.INEN = 1; \
+                 SAMD21_LCD6PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA6)].bit.PULLEN = 0; \
+                 SAMD21_LCD6PORT->DIRSET.reg = digitalPinToBitMask(SAMD21_LCDDATA6); \
+                 SAMD21_LCD7PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA7)].bit.INEN = 1; \
+                 SAMD21_LCD7PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA7)].bit.PULLEN = 0; \
+                 SAMD21_LCD7PORT->DIRSET.reg = digitalPinToBitMask(SAMD21_LCDDATA7); \
+                 SAMD21_LCD8PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA8)].bit.INEN = 1; \
+                 SAMD21_LCD8PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA8)].bit.PULLEN = 0; \
+                 SAMD21_LCD8PORT->DIRSET.reg = digitalPinToBitMask(SAMD21_LCDDATA8); }
+        #endif
+
+
+
 
     #elif defined SAMD21_FEATHERM0BOARD
         #pragma message "Adafruit_TFTLCD: Using AdaFruit Feather M0 SAMD21 implementation"
@@ -923,14 +1033,24 @@
     //
     #pragma message "Adafruit_TFTLCD: Using generic implementation"
 
-    #define TTLCD_DATA0 2
-    #define TTLCD_DATA1 5
-    #define TTLCD_DATA2 11
-    #define TTLCD_DATA3 13
-    #define TTLCD_DATA4 10
-    #define TTLCD_DATA5 12
-    #define TTLCD_DATA6 6
-    #define TTLCD_DATA7 7
+    #define TTLCD_DATA0 11
+    #define TTLCD_DATA1 13
+    #define TTLCD_DATA2 10
+    #define TTLCD_DATA3 12
+    #define TTLCD_DATA4 6
+    #define TTLCD_DATA5 7
+    #define TTLCD_DATA6 20
+    #define TTLCD_DATA7 21
+
+    // #define TTLCD_DATA0 2
+    // #define TTLCD_DATA1 5
+    // #define TTLCD_DATA2 11
+    // #define TTLCD_DATA3 13
+    // #define TTLCD_DATA4 10
+    // #define TTLCD_DATA5 12
+    // #define TTLCD_DATA6 6
+    // #define TTLCD_DATA7 7
+
 
     #define TTLCD_READ PIN_A0
     #define TTLCD_WRITE PIN_A1
