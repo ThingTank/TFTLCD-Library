@@ -6,8 +6,8 @@
 
 #define DEBUG
 #ifdef DEBUG
-  #define DEBUGPRINT(str) Serial.println(str);
-	#define DEBUGPRINT2(str) Serial.print(str);
+  #define DEBUGPRINT(str) SerialUSB.println(str);
+	#define DEBUGPRINT2(str) SerialUSB.print(str);
 #else
   #define DEBUGPRINT(str)
 	#define DEBUGPRINT2(str)
@@ -121,8 +121,8 @@ void Adafruit_TFTLCD::init(void) {
   RD_IDLE;
 	DEBUGPRINT("*** Adafruit_TFTLCD: INIT - CD_DATA")
   CD_DATA;
-//	DEBUGPRINT("*** Adafruit_TFTLCD: INIT - Reset display")
-//  digitalWrite(A4, HIGH); // Reset line
+	DEBUGPRINT("*** Adafruit_TFTLCD: INIT - Reset display")
+  digitalWrite(A4, HIGH); // Reset line
 	DEBUGPRINT("*** Adafruit_TFTLCD: INIT - Pins to Output")
   pinMode(A3, OUTPUT);   // Enable outputs
   pinMode(A2, OUTPUT);
@@ -375,9 +375,9 @@ void Adafruit_TFTLCD::reset(void) {
   RD_IDLE;
 
 #ifdef USE_ADAFRUIT_SHIELD_PINOUT
-  digitalWrite(5, LOW);
-  delay(2);
-  digitalWrite(5, HIGH);
+//  digitalWrite(A4, LOW);
+//  delay(2);
+//  digitalWrite(A4, HIGH);
 #else
   if(_reset) {
     digitalWrite(_reset, LOW);

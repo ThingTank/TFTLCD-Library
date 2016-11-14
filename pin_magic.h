@@ -491,7 +491,7 @@
     // +---------+--------------+--------------
 
     // Uncomment the following line to use the above board & pin configuration:
-    //#define SAMD21LCD_ZEROBOARD
+    #define SAMD21LCD_ZEROBOARD
 
 
     // *****************************************************************************
@@ -534,10 +534,71 @@
     // =============================================================================
 
     #ifdef SAMD21LCD_ZEROBOARD
-        // TODO
+        #pragma message "Adafruit_TFTLCD: Using Arduino Zero SAMD21 implementation"
 
+        #define LCD_PORTMASK (PORT_PA14 | PORT_PA15 | PORT_PA16 | PORT_PA17 | PORT_PA18 | PORT_PA19 | PORT_PA20 | PORT_PA21)
+
+        // Reading data
+        #define read8inline(result) { \
+         RD_ACTIVE;   \
+         delayMicroseconds(1);      \
+         result = ((REG_PORT_IN0 & LCD_PORTMASK) >> 14); \
+         RD_IDLE; }
+
+         // Writing data
+         #define write8inline(d) { \
+           (REG_PORT_OUTSET0 = ((d) << 14)); \
+           (REG_PORT_OUTCLR0 = ((~d) << 14)); \
+           WR_STROBE; }
+
+         // Port directions
+         //
+         // TODO: Optimize using WRCONFIG
+         //
+         #define setWriteDirInline() { \
+           PORT->Group[PORTA].PINCFG[PIN_PA14].bit.INEN = 1; \
+           PORT->Group[PORTA].PINCFG[PIN_PA14].bit.PULLEN = 0; \
+           PORT->Group[PORTA].PINCFG[PIN_PA15].bit.INEN = 1; \
+           PORT->Group[PORTA].PINCFG[PIN_PA15].bit.PULLEN = 0; \
+           PORT->Group[PORTA].PINCFG[PIN_PA16].bit.INEN = 1; \
+           PORT->Group[PORTA].PINCFG[PIN_PA16].bit.PULLEN = 0; \
+           PORT->Group[PORTA].PINCFG[PIN_PA17].bit.INEN = 1; \
+           PORT->Group[PORTA].PINCFG[PIN_PA17].bit.PULLEN = 0; \
+           PORT->Group[PORTA].PINCFG[PIN_PA18].bit.INEN = 1; \
+           PORT->Group[PORTA].PINCFG[PIN_PA18].bit.PULLEN = 0; \
+           PORT->Group[PORTA].PINCFG[PIN_PA19].bit.INEN = 1; \
+           PORT->Group[PORTA].PINCFG[PIN_PA19].bit.PULLEN = 0; \
+           PORT->Group[PORTA].PINCFG[PIN_PA20].bit.INEN = 1; \
+           PORT->Group[PORTA].PINCFG[PIN_PA20].bit.PULLEN = 0; \
+           PORT->Group[PORTA].PINCFG[PIN_PA20].bit.INEN = 1; \
+           PORT->Group[PORTA].PINCFG[PIN_PA20].bit.PULLEN = 0; \
+           REG_PORT_DIRSET0 = LCD_PORTMASK; \
+         }
+
+         #define setReadDirInline() { \
+           PORT->Group[PORTA].PINCFG[PIN_PA14].reg = (uint8_t)(PORT_PINCFG_INEN|PORT_PINCFG_PULLEN); \
+           PORT->Group[PORTA].PINCFG[PIN_PA14].bit.PULLEN = 0; \
+           PORT->Group[PORTA].PINCFG[PIN_PA15].reg = (uint8_t)(PORT_PINCFG_INEN|PORT_PINCFG_PULLEN); \
+           PORT->Group[PORTA].PINCFG[PIN_PA15].bit.PULLEN = 0; \
+           PORT->Group[PORTA].PINCFG[PIN_PA16].reg = (uint8_t)(PORT_PINCFG_INEN|PORT_PINCFG_PULLEN); \
+           PORT->Group[PORTA].PINCFG[PIN_PA16].bit.PULLEN = 0; \
+           PORT->Group[PORTA].PINCFG[PIN_PA17].reg = (uint8_t)(PORT_PINCFG_INEN|PORT_PINCFG_PULLEN); \
+           PORT->Group[PORTA].PINCFG[PIN_PA17].bit.PULLEN = 0; \
+           PORT->Group[PORTA].PINCFG[PIN_PA18].reg = (uint8_t)(PORT_PINCFG_INEN|PORT_PINCFG_PULLEN); \
+           PORT->Group[PORTA].PINCFG[PIN_PA18].bit.PULLEN = 0; \
+           PORT->Group[PORTA].PINCFG[PIN_PA19].reg = (uint8_t)(PORT_PINCFG_INEN|PORT_PINCFG_PULLEN); \
+           PORT->Group[PORTA].PINCFG[PIN_PA19].bit.PULLEN = 0; \
+           PORT->Group[PORTA].PINCFG[PIN_PA20].reg = (uint8_t)(PORT_PINCFG_INEN|PORT_PINCFG_PULLEN); \
+           PORT->Group[PORTA].PINCFG[PIN_PA20].bit.PULLEN = 0; \
+           PORT->Group[PORTA].PINCFG[PIN_PA21].reg = (uint8_t)(PORT_PINCFG_INEN|PORT_PINCFG_PULLEN); \
+           PORT->Group[PORTA].PINCFG[PIN_PA21].bit.PULLEN = 0; \
+           REG_PORT_DIRCLR0 = LCD_PORTMASK; \
+           REG_PORT_OUTCLR0 = LCD_PORTMASK; \
+         }
 
     #elif defined SAMD21_FEATHERM0BOARD
+        #pragma message "Adafruit_TFTLCD: Using AdaFruit Feather M0 SAMD21 implementation"
+
         // Pin definitions
         #define SAMD21_LCDDATA1 PIN_A4
         #define SAMD21_LCDDATA2 12
@@ -644,6 +705,8 @@
 
 
     #else  // GENERIC SAMD21 BOARD
+        #pragma message "Adafruit_TFTLCD: Using generic SAMD21 implementation"
+
         // Pin definitions
         #define SAMD21_LCDDATA1 PIN_A4
         #define SAMD21_LCDDATA2 12
@@ -852,15 +915,22 @@
     // I've written it here just to get this working on all Arduino boards.
     //
     // You can change the PIN layout below to fit your needs...
+    // Examples:
+    //  - To use a digital pin like D10, simply enter "10":
+    //     #define TTLCD_DATA5 10
+    //  - To use an analog pin, like A5, simply enter "PIN_A5":
+    //     #define TTLCD_DATA7 PIN_A5
+    //
+    #pragma message "Adafruit_TFTLCD: Using generic implementation"
 
-    #define TTLCD_DATA1 PIN_A4
-    #define TTLCD_DATA2 12
-    #define TTLCD_DATA3 11
+    #define TTLCD_DATA0 2
+    #define TTLCD_DATA1 5
+    #define TTLCD_DATA2 11
+    #define TTLCD_DATA3 13
     #define TTLCD_DATA4 10
-    #define TTLCD_DATA5 9
+    #define TTLCD_DATA5 12
     #define TTLCD_DATA6 6
-    #define TTLCD_DATA7 5
-    #define TTLCD_DATA8 PIN_A5
+    #define TTLCD_DATA7 7
 
     #define TTLCD_READ PIN_A0
     #define TTLCD_WRITE PIN_A1
@@ -882,22 +952,23 @@
     #define read8inline(result) { \
      RD_ACTIVE;   \
      delayMicroseconds(1);      \
-     result = ((digitalRead(TTLCD_DATA8) << 7) | (digitalRead(TTLCD_DATA7) << 6) | (digitalRead(TTLCD_DATA6) << 5) | (digitalRead(TTLCD_DATA5) << 4) | \
-               (digitalRead(TTLCD_DATA4) << 3) | (digitalRead(TTLCD_DATA3) << 2) | (digitalRead(TTLCD_DATA2) << 1) | (digitalRead(TTLCD_DATA1) << 0)); \
+     result = ((digitalRead(TTLCD_DATA7) << 7) | (digitalRead(TTLCD_DATA6) << 6) | (digitalRead(TTLCD_DATA5) << 5) | (digitalRead(TTLCD_DATA4) << 4) | \
+               (digitalRead(TTLCD_DATA3) << 3) | (digitalRead(TTLCD_DATA2) << 2) | (digitalRead(TTLCD_DATA1) << 1) | (digitalRead(TTLCD_DATA0) << 0)); \
      RD_IDLE; }
 
      #define write8inline(d) { \
-       digitalWrite(TTLCD_DATA1,(d) & 0x01); \
-       digitalWrite(TTLCD_DATA2,(d) & 0x02); \
-       digitalWrite(TTLCD_DATA3,(d) & 0x04); \
-       digitalWrite(TTLCD_DATA4,(d) & 0x08); \
-       digitalWrite(TTLCD_DATA5,(d) & 0x10); \
-       digitalWrite(TTLCD_DATA6,(d) & 0x20); \
-       digitalWrite(TTLCD_DATA7,(d) & 0x40); \
-       digitalWrite(TTLCD_DATA8,(d) & 0x80); \
+       digitalWrite(TTLCD_DATA0,(d) & 0x01); \
+       digitalWrite(TTLCD_DATA1,(d) & 0x02); \
+       digitalWrite(TTLCD_DATA2,(d) & 0x04); \
+       digitalWrite(TTLCD_DATA3,(d) & 0x08); \
+       digitalWrite(TTLCD_DATA4,(d) & 0x10); \
+       digitalWrite(TTLCD_DATA5,(d) & 0x20); \
+       digitalWrite(TTLCD_DATA6,(d) & 0x40); \
+       digitalWrite(TTLCD_DATA7,(d) & 0x80); \
        WR_STROBE; }
 
      #define setWriteDirInline() { \
+       pinMode(TTLCD_DATA0, OUTPUT); \
        pinMode(TTLCD_DATA1, OUTPUT); \
        pinMode(TTLCD_DATA2, OUTPUT); \
        pinMode(TTLCD_DATA3, OUTPUT); \
@@ -905,10 +976,10 @@
        pinMode(TTLCD_DATA5, OUTPUT); \
        pinMode(TTLCD_DATA6, OUTPUT); \
        pinMode(TTLCD_DATA7, OUTPUT); \
-       pinMode(TTLCD_DATA8, OUTPUT); \
      }
 
      #define setReadDirInline() { \
+       pinMode(TTLCD_DATA0, INPUT); \
        pinMode(TTLCD_DATA1, INPUT); \
        pinMode(TTLCD_DATA2, INPUT); \
        pinMode(TTLCD_DATA3, INPUT); \
@@ -916,7 +987,6 @@
        pinMode(TTLCD_DATA5, INPUT); \
        pinMode(TTLCD_DATA6, INPUT); \
        pinMode(TTLCD_DATA7, INPUT); \
-       pinMode(TTLCD_DATA8, INPUT); \
      }
 
 // END: ThingTank TIJA contribution
