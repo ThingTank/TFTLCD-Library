@@ -294,25 +294,109 @@ void Adafruit_TFTLCD::begin(uint16_t id) {
     uint16_t a, d;
     driver = ID_9341;
     CS_ACTIVE;
+    // Erriez - 24/7/2016 - Comments added
+    // https://github.com/adafruit/TFTLCD-Library/pull/24/commits/1b38cba621cd5cfa80a562dcaae0bc16e5ed1fc2
+    // yarda - 16/9/2015 - Various ILI9341 fixes
+    // https://github.com/adafruit/TFTLCD-Library/pull/17/commits/bdb2652aa5cc20cc6a754ec59a19388a97f7f6fc
+
+    // Software Reset (01h)
     writeRegister8(ILI9341_SOFTRESET, 0);
+    // Worst case delay after soft reset
     delay(50);
+    // Display OFF (28h)
     writeRegister8(ILI9341_DISPLAYOFF, 0);
 
+    // yarda -- https://github.com/adafruit/TFTLCD-Library/pull/17
+    /*  On my ILI9341 the pump ratio control register is set to 0 after
+        the reset. According to the datasheet this value is 'reserved',
+        and the register should be set to 0x20 (i.e. 2xVCI).
+        To be safe also setting other extended registers to their default values
+        according to the datasheet. If extended registers are not available,
+        the settings should be harmless and treated as NOP commands
+        (acording to the datasheet :).
+    */
+    // Note: ThingTank TIJA: on the AdaFruit 2.8" capacitive touch LCD, this
+    // does not work (display stays white). So I uncomment it and leave it in
+    // for those of you that have another ILI9341 based board where this code is
+    // necessary...
+    // writeRegister40(ILI9341_POWERCONTROLA, 0x392C0034, 0x02);
+    // writeRegister24(ILI9341_POWERCONTROLB, 0x00A2F0);
+    // writeRegister24(ILI9341_DRVTIMINGCONTROLA, 0x84117A);
+    // writeRegister16(ILI9341_DRVTIMINGCONTROLB, 0x6600);
+    // writeRegister32(ILI9341_PWRONCTRLSEQUENCE, 0x55012301);
+    //
+    // writeRegister8(ILI9341_PUMPRATIOCONTROL, 0x20);
+
+    // Power Control 1 (C0h)
+    // Reset value: 21h
+    // - D[5:0]: VRH[5:0] = 6'b100011: 4.60 V
+    // Set the GVDD level, which is a reference level for the VCOM
+    // level and the grayscale voltage level.
     writeRegister8(ILI9341_POWERCONTROL1, 0x23);
+    // Power Control 2 (C1h)
+    // Reset value: 10h:
+    // - D[4]:           = 1'b1
+    // - D[2:0]: BT[2:0] = 3'b000:
+    //   - Sets the factor used in the step-up circuits.
+    //   - AVDD: VCIx2
+    //   - VGH:  VCHx7
+    //   - VGL:  -VCIx4
     writeRegister8(ILI9341_POWERCONTROL2, 0x10);
+    // VCOM Control 1 (C5h)
+    // Reset value: 313Ch
+    // - D[7:0]:  VMH[6:0] = 7'b00101011: VCOMH = 3.775V
+    // - D[15:8]: VML[6:0] = 7'b00101011: VCOML = -1.425V
     writeRegister16(ILI9341_VCOMCONTROL1, 0x2B2B);
+    // VCOM Control 2 (C7h)
+    // Reset value: C0h
+    // - D[7]:   nVM      = 1'b1        VMF [6:0] becomes valid
+    // - D[6:0]: VMF[6:0] = 7'b1000000  VCOMH = VMH; VCOML = VML
     writeRegister8(ILI9341_VCOMCONTROL2, 0xC0);
-    writeRegister8(ILI9341_MEMCONTROL, ILI9341_MADCTL_MY | ILI9341_MADCTL_BGR);
+    // Memory Access Control (36h)
+    // Reset value: 00h
+    // - D[7]: MY  = 1'b1       Row Address Order
+    // - D[6]: MX  = 1'b0       Column Address Order
+    // - D[5]: MV  = 1'b0       Row / Column Exchange
+    // - D[4]: ML  = 1'b0       Vertical Refresh Order
+    // - D[3]: BGR = 1'b1       RGB-BGR Order: BGR color filter panel
+    // - D[2]: MH  = 1'b0       Horizontal Refresh ORDER
+    //writeRegister8(ILI9341_MEMCONTROL, ILI9341_MADCTL_MY | ILI9341_MADCTL_BGR);
+    d = 0;
+    #ifdef ILI9341_MIRROR_X
+      d |= ILI9341_MADCTL_MX;
+    #endif
+    #ifdef ILI9341_MIRROR_Y
+      d |= ILI9341_MADCTL_MY;
+    #endif
+    writeRegister8(ILI9341_MEMCONTROL, d | ILI9341_MADCTL_BGR);
+
+    // COLMOD: Pixel Format Set (3Ah)
+    // Reset value: 66h
+    // - D[6:4]: DPI[2:0] = 3'b101  16 bits / pixel
+    // - D[2:0]: DBI[2:0] = 3'b101  16 bits / pixel
     writeRegister8(ILI9341_PIXELFORMAT, 0x55);
+    // Frame Rate Control (In Normal Mode/Full Colors) (B1h)
+    // Reset value: 001Bh
+    // - D[1:0]:  DIVA[1:0] = 2'b00    Division Ratio = fosc
+    // - D[12:8]: RTNA[4:0] = 5'b11011 Frame Rate: 70Hz (default)
     writeRegister16(ILI9341_FRAMECONTROL, 0x001B);
-
+    // Entry Mode Set (B7h)
+    // Reset value: 06h
+    // - D[3]: DSTB = 1'b0        Deep Standby Mode: Disable
+    // - D[2]: GON  = 1'b1        G1~G320 Gate Output: Normal display
+    // - D[1]: DTE  = 1'b1        G1~G320 Gate Output: Normal display
+    // - D[0]: GAS  = 1'b1        Low voltage detection: Disable
     writeRegister8(ILI9341_ENTRYMODE, 0x07);
-    /* writeRegister32(ILI9341_DISPLAYFUNC, 0x0A822700);*/
+    // Display Function Control (B6h)
+    // writeRegister32(ILI9341_DISPLAYFUNC, 0x0A822700);
 
+    // Enter Sleep Mode (10h)
     writeRegister8(ILI9341_SLEEPOUT, 0);
     delay(150);
+    // Display ON (29h)
     writeRegister8(ILI9341_DISPLAYON, 0);
     delay(500);
+    // Configure Column Address Set (2Ah) and Page Address Set (2Bh)
     setAddrWindow(0, 0, TFTWIDTH-1, TFTHEIGHT-1);
     return;
 
@@ -371,9 +455,9 @@ void Adafruit_TFTLCD::reset(void) {
   RD_IDLE;
 
 #ifdef USE_ADAFRUIT_SHIELD_PINOUT
-//  digitalWrite(A4, LOW);
-//  delay(2);
-//  digitalWrite(A4, HIGH);
+   digitalWrite(A4, LOW);
+   delay(2);
+   digitalWrite(A4, HIGH);
 #else
   if(_reset) {
     digitalWrite(_reset, LOW);
@@ -381,6 +465,15 @@ void Adafruit_TFTLCD::reset(void) {
     digitalWrite(_reset, HIGH);
   }
 #endif
+
+  // blazangel 24/Jul/2016
+  // https://github.com/adafruit/TFTLCD-Library/pull/24/commits/b34bafb849119842738b346cdf974cf3ce14ce59
+  //
+  // According to the ILI9341 datasheet, a delay of at least 5ms is
+  // required after releasing the RESET signal before sending
+  // commands. Some displays won't start after power-on without this
+  // delay.
+  delay(5);
 
   // Data transfer sync
   CS_ACTIVE;
@@ -510,6 +603,7 @@ void Adafruit_TFTLCD::flood(uint16_t color, uint32_t len) {
   write8(hi);
   write8(lo);
   len--;
+  CS_ACTIVE;            // yarda
 
   blocks = (uint16_t)(len / 64); // 64 pixels/block
   if(hi == lo) {
@@ -564,7 +658,7 @@ void Adafruit_TFTLCD::drawFastHLine(int16_t x, int16_t y, int16_t length,
 
   setAddrWindow(x, y, x2, y);
   flood(color, length);
-  if(driver == ID_932X) setAddrWindow(0, 0, _width - 1, _height - 1);
+  if(driver == ID_932X || driver == ID_9341) setAddrWindow(0, 0, _width - 1, _height - 1);
   else                  setLR();
 }
 
@@ -588,7 +682,7 @@ void Adafruit_TFTLCD::drawFastVLine(int16_t x, int16_t y, int16_t length,
 
   setAddrWindow(x, y, x, y2);
   flood(color, length);
-  if(driver == ID_932X) setAddrWindow(0, 0, _width - 1, _height - 1);
+  if(driver == ID_932X || driver == ID_9341) setAddrWindow(0, 0, _width - 1, _height - 1);
   else                  setLR();
 }
 
@@ -889,6 +983,25 @@ uint16_t Adafruit_TFTLCD::readPixel(int16_t x, int16_t y) {
     return (((uint16_t)r & B11111000) << 8) |
            (((uint16_t)g & B11111100) << 3) |
            (           b              >> 3);
+  } else if(driver == ID_9341) {
+    // Erriez - 26/7/2016 -- add read suppor tfor ILI9341
+    // https://github.com/adafruit/TFTLCD-Library/pull/24/commits/e959ea5f37e0fd4eea88c4e9acdb7afea8cb900c
+    uint8_t r, g, b;
+
+    setAddrWindow(x, y, _width-1, _height-1);
+    CS_ACTIVE;
+    CD_COMMAND;
+    write8(0x2E);
+    setReadDir();  // Set up LCD data port(s) for READ operations
+    CD_DATA;
+    read8(r);      // First byte back is a dummy read
+    read8(r);
+    read8(g);
+    read8(b);
+    setWriteDir(); // Restore LCD data port(s) to WRITE configuration
+    return (((uint16_t)r & B11111000) << 8) |
+           (((uint16_t)g & B11111100) << 3) |
+           (           b              >> 3);
   } else return 0;
 }
 
@@ -900,28 +1013,28 @@ uint16_t Adafruit_TFTLCD::readID(void) {
   /*
   for (uint8_t i=0; i<128; i++) {
     Serial.print("$"); Serial.print(i, HEX);
-    Serial.print(" = 0x"); Serial.println(readReg(i), HEX);
+    Serial.print(" = 0x"); Serial.println(readReg32(i), HEX);
   }
   */
 
-  if (readReg(0x04) == 0x8000) { // eh close enough
+  if (readReg32(0x04) == 0x8000) { // eh close enough
     // setc!
     /*
       Serial.println("!");
       for (uint8_t i=0; i<254; i++) {
       Serial.print("$"); Serial.print(i, HEX);
-      Serial.print(" = 0x"); Serial.println(readReg(i), HEX);
+      Serial.print(" = 0x"); Serial.println(readReg32(i), HEX);
       }
     */
     writeRegister24(HX8357D_SETC, 0xFF8357);
     delay(300);
-    //Serial.println(readReg(0xD0), HEX);
-    if (readReg(0xD0) == 0x990000) {
+    //Serial.println(readReg32(0xD0), HEX);
+    if (readReg32(0xD0) == 0x990000) {
       return 0x8357;
     }
   }
 
-  uint16_t id = readReg(0xD3);
+  uint16_t id = readReg32(0xD3);
   if (id == 0x9341) {
     return id;
   }
@@ -941,7 +1054,50 @@ uint16_t Adafruit_TFTLCD::readID(void) {
   return id;
 }
 
-uint32_t Adafruit_TFTLCD::readReg(uint8_t r) {
+uint8_t Adafruit_TFTLCD::readReg8(uint8_t r) {
+  uint8_t id;
+
+  // try reading register #4
+  CS_ACTIVE;
+  CD_COMMAND;
+  write8(r);
+  setReadDir();  // Set up LCD data port(s) for READ operations
+  CD_DATA;
+  delayMicroseconds(50);
+  read8(id);
+  CS_IDLE;
+  setWriteDir();  // Restore LCD data port(s) to WRITE configuration
+
+  //Serial.print("Read $"); Serial.print(r, HEX);
+  //Serial.print(":\t0x"); Serial.println(id, HEX);
+  return id;
+}
+
+uint16_t Adafruit_TFTLCD::readReg16(uint8_t r) {
+  uint16_t id;
+  uint8_t x;
+
+  // try reading register #4
+  CS_ACTIVE;
+  CD_COMMAND;
+  write8(r);
+  setReadDir();  // Set up LCD data port(s) for READ operations
+  CD_DATA;
+  delayMicroseconds(50);
+  read8(x);
+  id = x;          // Do not merge or otherwise simplify
+  id <<= 8;              // these lines.  It's an unfortunate
+  read8(x);
+  id  |= x;        // shenanigans that are going on.
+  CS_IDLE;
+  setWriteDir();  // Restore LCD data port(s) to WRITE configuration
+
+  //Serial.print("Read $"); Serial.print(r, HEX);
+  //Serial.print(":\t0x"); Serial.println(id, HEX);
+  return id;
+}
+
+uint32_t Adafruit_TFTLCD::readReg32(uint8_t r) {
   uint32_t id;
   uint8_t x;
 
@@ -1055,4 +1211,22 @@ void Adafruit_TFTLCD::writeRegister32(uint8_t r, uint32_t d) {
   write8(d);
   CS_IDLE;
 
+}
+
+void Adafruit_TFTLCD::writeRegister40(uint8_t r, uint32_t d1, uint8_t d2) {
+  CS_ACTIVE;
+  CD_COMMAND;
+  write8(r);
+  CD_DATA;
+  delayMicroseconds(10);
+  write8(d1 >> 24);
+  delayMicroseconds(10);
+  write8(d1 >> 16);
+  delayMicroseconds(10);
+  write8(d1 >> 8);
+  delayMicroseconds(10);
+  write8(d1);
+  delayMicroseconds(10);
+  write8(d2);
+  CS_IDLE;
 }

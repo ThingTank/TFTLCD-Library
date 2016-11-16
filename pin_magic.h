@@ -122,14 +122,18 @@
  #else // Uno w/Breakout board
 
   #define write8inline(d) {                          \
+    CS_ACTIVE;                                       \                  // yarda
     PORTD = (PORTD & B00000011) | ((d) & B11111100); \
     PORTB = (PORTB & B11111100) | ((d) & B00000011); \
-    WR_STROBE; }
+    WR_STROBE;                                       \                  // yarda
+    CS_IDLE; }
   #define read8inline(result) {                       \
+    CS_ACTIVE;                                       \                  // yarda
     RD_ACTIVE;                                        \
     AVRDELAY7;                                           \
     result = (PIND & B11111100) | (PINB & B00000011); \
-    RD_IDLE; }
+    RD_IDLE;                                        \                   // yarda
+    CS_IDLE; }
   #define setWriteDirInline() { DDRD |=  B11111100; DDRB |=  B00000011; }
   #define setReadDirInline()  { DDRD &= ~B11111100; DDRB &= ~B00000011; }
 

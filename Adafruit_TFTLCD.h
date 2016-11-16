@@ -16,11 +16,12 @@
 
 // **** IF USING THE LCD BREAKOUT BOARD, COMMENT OUT THIS NEXT LINE. ****
 // **** IF USING THE LCD SHIELD, LEAVE THE LINE ENABLED:             ****
-
-// THINGTANK TIJA: Following the procedure on the following page:
-// https://learn.adafruit.com/adafruit-2-dot-8-color-tft-touchscreen-breakout-v2/8-bit-wiring
-// the following line needs to be UNcommented:
 #define USE_ADAFRUIT_SHIELD_PINOUT 1
+
+// yarda -- https://github.com/adafruit/TFTLCD-Library/pull/17/commits/bdb2652aa5cc20cc6a754ec59a19388a97f7f6fc
+// Some ILI9341 based kits have mirrored X or Y, uncomment/comment respectively
+//# define ILI9341_MIRROR_X 1
+# define ILI9341_MIRROR_Y 1
 
 class Adafruit_TFTLCD : public Adafruit_GFX {
 
@@ -46,7 +47,9 @@ class Adafruit_TFTLCD : public Adafruit_GFX {
   uint16_t color565(uint8_t r, uint8_t g, uint8_t b),
            readPixel(int16_t x, int16_t y),
            readID(void);
-  uint32_t readReg(uint8_t r);
+  uint8_t readReg8(uint8_t r);                                    // yarda
+  uint16_t readReg16(uint8_t r);
+  uint32_t readReg32(uint8_t r);
 
  private:
 
@@ -70,6 +73,7 @@ class Adafruit_TFTLCD : public Adafruit_GFX {
 #endif
     writeRegister24(uint8_t a, uint32_t d),
     writeRegister32(uint8_t a, uint32_t d),
+    writeRegister40(uint8_t a, uint32_t d1, uint8_t d2),            // yarda
 #ifndef writeRegisterPair
            writeRegisterPair(uint8_t aH, uint8_t aL, uint16_t d),
 #endif
