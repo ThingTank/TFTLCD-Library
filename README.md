@@ -11,9 +11,17 @@ Work is still in progress - library not completed yet - use at your own risk!
 ```
 I've also added code that should make this library portable to other Arduino devices, not supported by AdaFruit. That code uses the standard Arduino communication (digitalRead, digitalWrite, ...) so is much slower compared to the optimized AdaFruit code for supported devices. You're probably better of using the SPI variation of the TFT LCD's in that case, but hey, the code is there if you need it.
 
+I've also taken the liberty of merging in this fork the various pull requests that have been open for quite some time already in the main AdaFruit repository, specifically:
+ * [Pull #27](https://github.com/adafruit/TFTLCD-Library/pull/27): The negative X1 coordinate bug 
+ * [Pull #24](https://github.com/adafruit/TFTLCD-Library/pull/24): Reset signal bugfix; readPixel() support for ILI9341
+ * [Pull #17](https://github.com/adafruit/TFTLCD-Library/pull/17): Various fixes, most notabily a speed increase for drawing lines, compile-time screen mirroring support, etc...
+
+The other open pull requests over at AdaFruit also all make sense, but where not applicable in my situation so didn't implement them (yet).
+
+## Some benchmarks
 Speed benchmark in microseconds, using the "GraphicsTest" example, on different SAMD21 boards:
 
-Test | Generic code | AdaFruit Feather M0 code | SparkFun SAMD21 Dev code
+Test | Generic code | MKR1000 | Zero
 :--- | ---: | ---: | ---:
 Screen fill             | 8799787   | 2876835 | 576785
 Text                    | 937758    | 467650 | 271590
