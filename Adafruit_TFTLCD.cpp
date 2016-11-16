@@ -658,7 +658,7 @@ void Adafruit_TFTLCD::drawFastHLine(int16_t x, int16_t y, int16_t length,
 
   setAddrWindow(x, y, x2, y);
   flood(color, length);
-  if(driver == ID_932X || driver == ID_9341) setAddrWindow(0, 0, _width - 1, _height - 1);
+  if(driver == ID_932X ) setAddrWindow(0, 0, _width - 1, _height - 1);  //|| driver == ID_9341  -- ThingTank TIJA: in my performance tests, it is faster to use setLR instead of setAddrWindow (10% difference)
   else                  setLR();
 }
 
@@ -682,7 +682,7 @@ void Adafruit_TFTLCD::drawFastVLine(int16_t x, int16_t y, int16_t length,
 
   setAddrWindow(x, y, x, y2);
   flood(color, length);
-  if(driver == ID_932X || driver == ID_9341) setAddrWindow(0, 0, _width - 1, _height - 1);
+  if(driver == ID_932X ) setAddrWindow(0, 0, _width - 1, _height - 1);  // || driver == ID_9341
   else                  setLR();
 }
 

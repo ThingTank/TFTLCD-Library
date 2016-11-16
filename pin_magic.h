@@ -601,9 +601,9 @@
                // Therefore, we only need to use DIRSET and DIRCLR to set input/output directions. For reading, we also
                // need to set INEN. For that we used the WRCONFIG register.
 
-               #define setWriteDirInline() { \
-                 REG_PORT_DIRSET0 = LCD_PORTMASK; \
-               }
+                #define setWriteDirInline() { \
+                  REG_PORT_DIRSET0 = LCD_PORTMASK; \
+                }
 
                // The Write Configuration register (WRCONFIG) requires the
                // pins to to grouped into two 16-bit half-words - split them out here
@@ -654,58 +654,40 @@
             //    REG_PORT_DIRSET0 = LCD_PORTMASK; \
             //  }
 
+
             // TODO: For some reason the WRCONFIG does not work when using
             // the I2C pins. I guess more configuration work is needed to
             // get them to work... fallback to generic code for now...
 
-            // Pin definitions
-            #define SAMD21_LCDDATA1 11
-            #define SAMD21_LCDDATA2 13
-            #define SAMD21_LCDDATA3 10
-            #define SAMD21_LCDDATA4 12
-            #define SAMD21_LCDDATA5 6
-            #define SAMD21_LCDDATA6 7
-            #define SAMD21_LCDDATA7 20
-            #define SAMD21_LCDDATA8 21
-
-            // Port definitions
-            #define SAMD21_LCD1PORT digitalPinToPort(SAMD21_LCDDATA1)
-            #define SAMD21_LCD2PORT digitalPinToPort(SAMD21_LCDDATA2)
-            #define SAMD21_LCD3PORT digitalPinToPort(SAMD21_LCDDATA3)
-            #define SAMD21_LCD4PORT digitalPinToPort(SAMD21_LCDDATA4)
-            #define SAMD21_LCD5PORT digitalPinToPort(SAMD21_LCDDATA5)
-            #define SAMD21_LCD6PORT digitalPinToPort(SAMD21_LCDDATA6)
-            #define SAMD21_LCD7PORT digitalPinToPort(SAMD21_LCDDATA7)
-            #define SAMD21_LCD8PORT digitalPinToPort(SAMD21_LCDDATA8)
-
-            #define digitalPinToPortPin(P) g_APinDescription[P].ulPin
-
+            #define LCD_DATAPORT (&(PORT->Group[PORTA]))
             #define setWriteDirInline() { \
-                 SAMD21_LCD1PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA1)].bit.INEN = 1; \
-                 SAMD21_LCD1PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA1)].bit.PULLEN = 0; \
-                 SAMD21_LCD1PORT->DIRSET.reg = digitalPinToBitMask(SAMD21_LCDDATA1); \
-                 SAMD21_LCD2PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA2)].bit.INEN = 1; \
-                 SAMD21_LCD2PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA2)].bit.PULLEN = 0; \
-                 SAMD21_LCD2PORT->DIRSET.reg = digitalPinToBitMask(SAMD21_LCDDATA2); \
-                 SAMD21_LCD3PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA3)].bit.INEN = 1; \
-                 SAMD21_LCD3PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA3)].bit.PULLEN = 0; \
-                 SAMD21_LCD3PORT->DIRSET.reg = digitalPinToBitMask(SAMD21_LCDDATA3); \
-                 SAMD21_LCD4PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA4)].bit.INEN = 1; \
-                 SAMD21_LCD4PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA4)].bit.PULLEN = 0; \
-                 SAMD21_LCD4PORT->DIRSET.reg = digitalPinToBitMask(SAMD21_LCDDATA4); \
-                 SAMD21_LCD5PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA5)].bit.INEN = 1; \
-                 SAMD21_LCD5PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA5)].bit.PULLEN = 0; \
-                 SAMD21_LCD5PORT->DIRSET.reg = digitalPinToBitMask(SAMD21_LCDDATA5); \
-                 SAMD21_LCD6PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA6)].bit.INEN = 1; \
-                 SAMD21_LCD6PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA6)].bit.PULLEN = 0; \
-                 SAMD21_LCD6PORT->DIRSET.reg = digitalPinToBitMask(SAMD21_LCDDATA6); \
-                 SAMD21_LCD7PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA7)].bit.INEN = 1; \
-                 SAMD21_LCD7PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA7)].bit.PULLEN = 0; \
-                 SAMD21_LCD7PORT->DIRSET.reg = digitalPinToBitMask(SAMD21_LCDDATA7); \
-                 SAMD21_LCD8PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA8)].bit.INEN = 1; \
-                 SAMD21_LCD8PORT->PINCFG[digitalPinToPortPin(SAMD21_LCDDATA8)].bit.PULLEN = 0; \
-                 SAMD21_LCD8PORT->DIRSET.reg = digitalPinToBitMask(SAMD21_LCDDATA8); }
-        #endif
+              LCD_DATAPORT->PINCFG[PIN_PA16].bit.INEN = 1; \
+              LCD_DATAPORT->PINCFG[PIN_PA16].bit.PULLEN = 0; \
+              LCD_DATAPORT->DIRSET.reg = PORT_PA16; \
+              LCD_DATAPORT->PINCFG[PIN_PA17].bit.INEN = 1; \
+              LCD_DATAPORT->PINCFG[PIN_PA17].bit.PULLEN = 0; \
+              LCD_DATAPORT->DIRSET.reg = PORT_PA17; \
+              LCD_DATAPORT->PINCFG[PIN_PA18].bit.INEN = 1; \
+              LCD_DATAPORT->PINCFG[PIN_PA18].bit.PULLEN = 0; \
+              LCD_DATAPORT->DIRSET.reg = PORT_PA18; \
+              LCD_DATAPORT->PINCFG[PIN_PA19].bit.INEN = 1; \
+              LCD_DATAPORT->PINCFG[PIN_PA19].bit.PULLEN = 0; \
+              LCD_DATAPORT->DIRSET.reg = PORT_PA19; \
+              LCD_DATAPORT->PINCFG[PIN_PA20].bit.INEN = 1; \
+              LCD_DATAPORT->PINCFG[PIN_PA20].bit.PULLEN = 0; \
+              LCD_DATAPORT->DIRSET.reg = PORT_PA20; \
+              LCD_DATAPORT->PINCFG[PIN_PA21].bit.INEN = 1; \
+              LCD_DATAPORT->PINCFG[PIN_PA21].bit.PULLEN = 0; \
+              LCD_DATAPORT->DIRSET.reg = PORT_PA21; \
+              LCD_DATAPORT->PINCFG[PIN_PA22].bit.INEN = 1; \
+              LCD_DATAPORT->PINCFG[PIN_PA22].bit.PULLEN = 0; \
+              LCD_DATAPORT->DIRSET.reg = PORT_PA22; \
+              LCD_DATAPORT->PINCFG[PIN_PA23].bit.INEN = 1; \
+              LCD_DATAPORT->PINCFG[PIN_PA23].bit.PULLEN = 0; \
+              LCD_DATAPORT->DIRSET.reg = PORT_PA23; \
+              REG_PORT_DIRSET0 = LCD_PORTMASK; \
+            }
+            #endif
 
 
 
