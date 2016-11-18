@@ -19,22 +19,22 @@ I've also taken the liberty of merging in this fork the various pull requests th
 The other open pull requests over at AdaFruit also all make sense, but where not applicable in my situation so didn't implement them (yet).
 
 ## Some benchmarks
-Speed benchmark in microseconds, using the "GraphicsTest" example, on different SAMD21 boards:
+Speed benchmark in microseconds, using the "GraphicsTest" example, on different SAMD21 boards; SPI test performed on a Feather M0 Proto board=
 
-Test | Generic code | MKR1000 | Zero
-:--- | ---: | ---: | ---:
-Screen fill             | 8799787   | 2876835 | 576785
-Text                    | 937758    | 467650 | 271590
-Lines                   | 8669701   | 4558891 | 2867372
-Horiz/Vert Lines        | 1093055   | 400925 | 83923
-Rectangles (outline)    | 716133    | 267931 | 63451
-Rectangles (filled)     | 26619628  | 9795900 | 1800202
-Circles (filled)        | 5139809   | 2182144 | 877089
-Circles (outline)       | 3785683   | 1992094 | 1251726
-Triangles (outline)     | 2755664   | 1445209 | 909307
-Triangles (filled)      | 9542007   | 3632513 | 942129
-Rounded rects (outline) | 1641708   | 779013 | 412223
-Rounded rects (filled)  | 29925709  | 10835993 | 2155870
+Test | Generic code | MKR1000 | Zero | SPI Test
+:--- | ---: | ---: | ---: | ---:
+Screen fill             | 8.799.787   | 2.876.835 | 576.785 | 2.911.460
+Text                    | 937.758    | 467.650 | 271.590 | 211.796
+Lines                   | 8.669.701   | 4.558.891 | 2.867.372 | 2.051.591
+Horiz/Vert Lines        | 1.093.055   | 400.925 | 83.923 | 241.689
+Rectangles (outline)    | 716.133    | 267.931 | 63.451 | 156.215
+Rectangles (filled)     | 26.619.628  | 9.795.900 | 1.800.202 | 6.046.101
+Circles (filled)        | 5.139.809   | 2.182.144 | 877.089 | 995.220
+Circles (outline)       | 3.785.683   | 1.992.094 | 1.251.726 | 894.614
+Triangles (outline)     | 2.755.664   | 1.445.209 | 909.307 | 650.532
+Triangles (filled)      | 9.542.007   | 3.632.513 | 942.129 | 2.060.690
+Rounded rects (outline) | 1.641.708   | 779.013 | 412.223 | 377.220
+Rounded rects (filled)  | 29.925.709  | 10.835.993 | 2.155.870 | 6.639.757
 
 The big difference between the "mini" SAMD21 boards like the MKR1000/AdaFruit Feather M0 and the bigger brothers Arduino Zero/Sparkfun SAMD21 Dev is that the design of the mini boards is compact, not exposing all the datapins of the SAMD21 processor - that is not necessarily a bad thing, just to be clear :). The bigger boards do expose all pins, which allows us to use some tricks in bit-shifting since we can neatly line up all 8 communication bits (saving on a dozen of operations per read & write operation to the TFT screen).
 
