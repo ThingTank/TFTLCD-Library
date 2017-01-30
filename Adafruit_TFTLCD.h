@@ -43,6 +43,7 @@ class Adafruit_TFTLCD : public Adafruit_GFX {
        // These methods are public in order for BMP examples to work:
   void     setAddrWindow(int x1, int y1, int x2, int y2);
   void     pushColors(uint16_t *data, uint8_t len, boolean first);
+  void     flood(uint16_t color, uint32_t len);
 
   uint16_t color565(uint8_t r, uint8_t g, uint8_t b),
            readPixel(int16_t x, int16_t y),
@@ -77,8 +78,7 @@ class Adafruit_TFTLCD : public Adafruit_GFX {
 #ifndef writeRegisterPair
            writeRegisterPair(uint8_t aH, uint8_t aL, uint16_t d),
 #endif
-           setLR(void),
-           flood(uint16_t color, uint32_t len);
+           setLR(void);
   uint8_t  driver;
 
 #ifndef read8

@@ -637,8 +637,7 @@ void Adafruit_TFTLCD::flood(uint16_t color, uint32_t len) {
   CS_IDLE;
 }
 
-void Adafruit_TFTLCD::drawFastHLine(int16_t x, int16_t y, int16_t length,
-  uint16_t color)
+void Adafruit_TFTLCD::drawFastHLine(int16_t x, int16_t y, int16_t length, uint16_t color)
 {
   int16_t x2;
 
@@ -817,9 +816,10 @@ void Adafruit_TFTLCD::pushColors(uint16_t *data, uint8_t len, boolean first) {
     if(driver == ID_932X) write8(0x00);
     if ((driver == ID_9341) || (driver == ID_HX8357D)){
        write8(0x2C);
-     }  else {
+    }
+    else {
        write8(0x22);
-     }
+    }
   }
   CD_DATA;
   while(len--) {

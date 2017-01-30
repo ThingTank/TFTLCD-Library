@@ -12,7 +12,6 @@
 #define LCD_CD A2 // Command/Data goes to Analog 2
 #define LCD_WR A1 // LCD Write goes to Analog 1
 #define LCD_RD A0 // LCD Read goes to Analog 0
-
 #define LCD_RESET A4 // Can alternately just connect to Arduino's reset pin
 
 // When using the BREAKOUT BOARD only, use these 8 data lines to the LCD:

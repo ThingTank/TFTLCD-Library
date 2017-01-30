@@ -519,7 +519,7 @@
     // | CS      | A3           | PA04
     // | Reset   | A4           | PA05
     // +---------+--------------+--------------
-    #define SAMD21_LCDZEROBOARD_HARDCORE
+    //#define SAMD21_LCDZEROBOARD_HARDCORE
 
 
 
