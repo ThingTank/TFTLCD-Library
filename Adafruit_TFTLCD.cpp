@@ -1210,7 +1210,6 @@ void Adafruit_TFTLCD::writeRegister32(uint8_t r, uint32_t d) {
   delayMicroseconds(10);
   write8(d);
   CS_IDLE;
-
 }
 
 void Adafruit_TFTLCD::writeRegister40(uint8_t r, uint32_t d1, uint8_t d2) {
